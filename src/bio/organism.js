@@ -14,7 +14,10 @@ const LIGHT_BUDGET = 6;
 // tempo pobierania zasobów na jednostkę zdolności tkanki
 export const MINERAL_RATE = 0.135;
 export const ABSORB_RATE = 0.055;
-export const DIGEST_RATE = 0.16;
+// Trawienie okruchu jest szybkie i wydajne — kto znajdzie ciało, ma z niego
+// realny zysk. To ta nagroda sprawia, że szukanie pokarmu się opłaca; gdyby
+// tempo ledwo pokrywało utrzymanie, ruch nie miałby czego zwracać.
+export const DIGEST_RATE = 0.5;
 
 /**
  * Organizm. Silnik nie wie, czy to "roślina", "drapieżnik" czy "pasożyt" —
@@ -22,10 +25,15 @@ export const DIGEST_RATE = 0.16;
  * jest opisem tego, co organizm faktycznie robi, a nie jego definicją.
  */
 export class Organism {
-  constructor(genome, x, y, energy, world) {
+  /**
+   * `buildBudget` to energia, jaką rodzic przeznaczył na zbudowanie tego ciała.
+   * Gdy jej nie starcza, rozwój zarodkowy zatrzymuje się w połowie — i właśnie
+   * dlatego duże ciało nie może powstać w jednym pokoleniu.
+   */
+  constructor(genome, x, y, energy, world, buildBudget = Infinity) {
     this.id = ORG_SEQ++;
     this.genome = genome;
-    this.body = develop(genome);
+    this.body = develop(genome, buildBudget);
     this.brain = buildBrain(this.body, genome.params);
     // mięsień musi wiedzieć, który efektor go napędza
     for (const b of this.body.bonds) b.effIdx = -1;
@@ -286,7 +294,10 @@ export class Organism {
       const ti = world.tileOf(wx, wy);
       switch (s.mod) {
         case 0: out[i] = world.lightAt(ti, climate) - 0.35; break;
-        case 1: out[i] = (world.detritus[ti] * 0.05 + world.nutrient[ti] * 0.01) - 0.5; break;
+        // Stężenie maleje z odległością od okruchu, więc receptory po dwóch
+        // stronach ciała odczytują różne wartości — to jest ten gradient.
+        case 1: out[i] = world.food.concentrationAt(wx, wy) * 0.05
+          + world.detritus[ti] * 0.02 - 0.4; break;
         case 2: out[i] = (p ? p.touch[s.cell] : this.contact) * 2 - 0.2; break;
         case 3: out[i] = (world.tempAt(ti, climate) - 18) * 0.06; break;
         case 4: out[i] = this.neighborDensity - 0.3; break;
@@ -343,25 +354,24 @@ export class Organism {
       world.addOxygen(ti, g * 0.0016);
     }
 
-    // Materia organiczna: jedna pula, dwa różne sposoby jej wykorzystania.
-    if (cap.absorb > 0.01 || cap.digest > 0.01) {
+    // Rozpuszczona materia organiczna: rozlana po całym kaflu, dostępna dla
+    // każdego, kto filtruje. Nie trzeba po nią iść, ale i nie ma jej dużo.
+    if (cap.absorb > 0.01) {
       const dLoad = world.detritusLoad[ti] * dt;
       const dSupply = world.detritus[ti];
       const dFair = dLoad > dSupply ? dSupply / dLoad : 1;
+      const got = world.takeDetritus(ti, cap.absorb * ABSORB_RATE * dt * dFair);
+      const g = got * 1.15 * tempEff * (inWater ? 1.4 : 0.55);
+      gained += g; this.gain.absorb += g;
+    }
 
-      // Wchłanianie rozpuszczonej materii: powolne, ale wydajne, zwłaszcza w wodzie.
-      if (cap.absorb > 0.01) {
-        const got = world.takeDetritus(ti, cap.absorb * ABSORB_RATE * dt * dFair);
-        const g = got * 1.15 * tempEff * (inWater ? 1.4 : 0.55);
-        gained += g; this.gain.absorb += g;
-      }
-      // Rozkład materii stałej: szybszy, mniej wydajny — ta sama maszyneria,
-      // która pozwala nadtrawić cudzą tkankę przy kontakcie.
-      if (cap.digest > 0.01) {
-        const got = world.takeDetritus(ti, cap.digest * DIGEST_RATE * dt * dFair);
-        const g = got * 0.62 * tempEff;
-        gained += g; this.gain.detritus += g;
-      }
+    // Pokarm stały leży w konkretnym miejscu. Trzeba go dosięgnąć — i to jest
+    // jedyny powód, dla którego ruch może się organizmowi opłacić.
+    if (cap.digest > 0.01) {
+      const reach = this.radius + 2.5;
+      const got = world.food.consume(this.x, this.y, reach, cap.digest * DIGEST_RATE * dt);
+      const g = got * 0.62 * tempEff;
+      gained += g; this.gain.detritus += g;
     }
 
     // koszty
@@ -406,13 +416,16 @@ export class Organism {
 
     const invest = clamp(P.invest, 0.05, 0.9);
     const give = this.energy * invest;
+    // Część przekazanej energii idzie na budowę ciała, reszta zostaje
+    // potomkowi na start. Zarodek nie zbuduje się ponad to, co dostał.
+    const buildBudget = give * 0.7;
     const ang = rng.float(0, TAU);
     const d = (this.radius + 1.5) * (1 + P.disperse * rng.float(0.2, 1.4));
     const cx = clamp(this.x + Math.cos(ang) * d, 1, world.widthUnits - 2);
     const cy = clamp(this.y + Math.sin(ang) * d, 1, world.heightUnits - 2);
 
-    // część energii przepada przy budowie nowego ciała — nic nie jest za darmo
-    const child = new Organism(childGenome, cx, cy, give * 0.85, world);
+    const child = new Organism(childGenome, cx, cy, null, world, buildBudget);
+    child.energy = Math.max(0.5, give - child.body.buildEnergy);
     child.parentId = this.id;
     child.origin = 'parent';
     child.ancestorId = this.ancestorId || this.id;

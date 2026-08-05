@@ -148,11 +148,49 @@ Neurony mogą wyewoluować własny rytm (komórki rozrusznikowe) oraz plastyczno
 hebbowską. Organizm bez neuronów może mieć wyłącznie łuk odruchowy: receptor
 połączony bezpośrednio z mięśniem.
 
+### Pokarm leży w konkretnym miejscu
+
+Martwe ciało nie rozpływa się po kaflu — zostaje okruchem tam, gdzie padło.
+Ma położenie, więc jego stężenie maleje płynnie z odległością.
+
+To pozornie drobna różnica, ale bez niej ruch nie mógł się do niczego przydać.
+Kafel ma dwanaście jednostek szerokości, a organizm dwie: oba jego receptory
+mieściły się w tym samym kaflu i odczytywały identyczną liczbę. Gradientu nie
+było, więc nie było czego porównać ani w którą stronę płynąć. Okruch daje
+receptorom po dwóch stronach ciała wartości różniące się o kilkadziesiąt
+procent — i dopiero to jest informacja, na której dobór może pracować.
+
+Pokarm trzeba dosięgnąć fizycznie: z odległości kilku jednostek nie da się go
+pobrać. Trawienie okruchu jest za to szybkie i wydajne, więc znalezienie ciała
+naprawdę się opłaca. Kto nie znajdzie — głoduje.
+
+Rozpuszczona materia organiczna została w polu kafla jako osobny, uboższy
+zasób. Jest wszędzie po trochu i nie trzeba po nią iść — to nisza dla tych,
+którzy filtrują, zamiast szukać.
+
+Okruchy powstają wyłącznie ze śmierci. Jedynym wyjątkiem jest pierwotna materia
+organiczna leżąca na planecie, zanim cokolwiek zaczęło żyć — jednorazowe
+wyposażenie świata, nie źródło produkujące bez końca. Nikt niezjedzony okruch
+rozkłada się na minerały, więc obieg materii domyka się nawet bez padlinożerców.
+
+### Ciało kosztuje energię, którą trzeba mieć
+
+Rozwój zarodkowy płaci za każdą komórkę i za każdy przyrost jej rozmiaru.
+Płaci z tego, co rodzic przekazał potomkowi — a nie z niczego. Gdy energii
+zabraknie, rozwój po prostu zatrzymuje się w połowie i rodzi się mniejsze ciało,
+niż zapowiadało DNA.
+
+Bez tego prawa wielokomórkowość pojawiała się skokiem: jednokomórkowy rodzic
+potrafił urodzić trzynastokomórkowe dziecko w jednym pokoleniu, bo ciało
+składało się za darmo. Teraz taki skok jest niemożliwy — na trzynaście komórek
+trzeba najpierw mieć trzynaście komórek energii. Wielkość rośnie stopniowo,
+przez linie, które kolejno stać na coraz większe potomstwo.
+
 ### Świat decyduje, co się opłaca
 
-Kafel mapy ma skończoną pulę światła, minerałów i martwej materii organicznej.
-Minerały i materia organiczna dzielą się sprawiedliwie między wszystkich
-mieszkańców kafla — o kolejności nie decyduje pozycja w tablicy.
+Kafel mapy ma skończoną pulę światła, minerałów i rozpuszczonej materii
+organicznej. Dzielą się sprawiedliwie między wszystkich mieszkańców kafla —
+o kolejności nie decyduje pozycja w tablicy.
 
 Światło dzieli się inaczej: większe ciało przechwytuje większą jego część.
 To jedyny powód, dla którego opłaca się rosnąć, i jedyne, czego potrzeba, by
@@ -219,7 +257,7 @@ organizm, który musi sobie w niej poradzić sam.
 ```
 index.html, styles.css     interfejs
 src/core/                  generator liczb losowych, szum, magistrala zdarzeń
-src/world/                 generowanie terenu, biomy, klimat, chemia kafli
+src/world/                 teren, biomy, klimat, chemia kafli, okruchy pokarmu
 src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,
                            gatunki, projekt pierwszej komórki
 src/sim/                   pętla symulacji, katastrofy, kronika, osiągnięcia
@@ -239,6 +277,7 @@ node tools/profile.js 6                 # gdzie schodzi czas w takcie
 node tools/uitest.mjs                   # test interfejsu w przeglądarce
 node tools/pagestest.mjs                # czy działa serwowany z podkatalogu
 node tools/biogeneza.js 5               # czy nic nie powstaje z niczego
+node tools/pokarm.js 12                 # czy pokarm daje powód do ruchu
 ```
 
 Test interfejsu wymaga Playwrighta — uruchamia prawdziwą przeglądarkę, przechodzi

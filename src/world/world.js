@@ -2,6 +2,7 @@ import { generateTerrain } from './worldgen.js';
 import { BIOME_DEF, isWater } from './biomes.js';
 import { clamp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
+import { FoodField } from './food.js';
 
 export const TILE = 12;            // jednostki świata na kafel
 export const SECTOR_TILES = 16;    // kafle na krawędź sektora
@@ -67,10 +68,30 @@ export class World {
     this.heightUnits = this.H * TILE;
     this.rng = new RNG(this.seedNum ^ 0x7a1f);
 
+    // Pokarm stały. Na starcie leży na planecie pierwotna materia organiczna —
+    // to jednorazowe wyposażenie świata, nie źródło, które produkuje bez końca.
+    // Od pierwszej śmierci wszystko, co tu przybędzie, pochodzi z ciał.
+    this.food = new FoodField(this);
+    this.seedPrimordialFood();
+
     // globalne pule — świat jako całość
     this.globalOxygen = this.params.oxygen;
     this.globalCO2 = 0.04;
     this.globalTempOffset = 0;
+  }
+
+  /** Rozsypuje pierwotną materię organiczną — w miejscach, gdzie jest żyzno. */
+  seedPrimordialFood() {
+    const rng = new RNG(this.seedNum ^ 0xf00d);
+    const target = Math.min(1400, Math.round(this.W * this.H * 0.012));
+    for (let n = 0; n < target * 6 && this.food.count < target; n++) {
+      const i = rng.int(this.W * this.H);
+      const b = BIOME_DEF[this.biome[i]];
+      if (rng.next() > b.nutrient * 0.5) continue;
+      const x = (i % this.W) * TILE + rng.float(0, TILE);
+      const y = ((i / this.W) | 0) * TILE + rng.float(0, TILE);
+      this.food.add(x, y, rng.float(3, 14));
+    }
   }
 
   idx(tx, ty) { return ty * this.W + tx; }

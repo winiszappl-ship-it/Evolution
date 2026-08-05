@@ -196,6 +196,7 @@ export class Simulation {
     }
 
     this.interactions(tick);
+    world.food.step(1);
     this.disasters.step(this, 1);
 
     for (const c of births) {
@@ -213,8 +214,13 @@ export class Simulation {
       for (let i = 0; i < this.organisms.length; i++) {
         const o = this.organisms[i];
         if (o.alive) { this.organisms[w++] = o; continue; }
+        // Ciało zostaje tam, gdzie padło: część jako okruch, który trzeba
+        // znaleźć i do którego trzeba dojść, część jako wyciek rozpuszczony
+        // w podłożu, dostępny dla wszystkiego, co filtruje.
         const ti = world.tileOf(o.x, o.y);
-        world.addDetritus(ti, o.body.mass * 3.2 + Math.max(0, o.energy) * 0.55);
+        const remains = o.body.mass * 3.2 + Math.max(0, o.energy) * 0.55;
+        world.food.add(o.x, o.y, remains * 0.75);
+        world.addDetritus(ti, remains * 0.25);
         this.stats.deaths++;
         this.watcher.onDeath(o);
       }

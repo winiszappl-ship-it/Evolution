@@ -3,6 +3,14 @@ import { clamp, TAU } from '../core/util.js';
 
 export const MAX_CELLS = 44;
 const DEV_OP_BUDGET = 24000;
+// Ile energii kosztuje zbudowanie jednostki masy ciała. Rodzic płaci to
+// z tego, co przekazał potomkowi — dlatego duże ciało nie może pojawić się
+// w jednym pokoleniu, choćby DNA o nim marzyło.
+export const BUILD_ENERGY_PER_MASS = 1.6;
+
+function cellBuildCost(r, cellCost) {
+  return Math.PI * r * r * cellCost * BUILD_ENERGY_PER_MASS;
+}
 
 /**
  * Rozwój zarodkowy.
@@ -12,14 +20,19 @@ const DEV_OP_BUDGET = 24000;
  * na własny wiek, stężenia morfogenów, liczbę sąsiadów i swoje położenie.
  * Kształt organizmu to skutek uboczny tych lokalnych decyzji.
  */
-export function develop(genome) {
+export function develop(genome, budget = Infinity) {
   const genes = genome.genes;
   const devSteps = Math.max(1, Math.round(genome.params.devSteps));
+  const cellCost = genome.params.cellCost;
 
   const cells = [makeCell(0, 0, 0.85, 0)];
   cells[0].m[0] = 1;              // depozyt matczyny — źródło pierwszej asymetrii
   let bonds = [];
   let ops = 0;
+
+  // Zarodek ma tyle energii budulcowej, ile dał mu rodzic. Pierwsza komórka
+  // powstaje zawsze — bez niej nie byłoby czego rozwijać.
+  const build = { spent: cellBuildCost(cells[0].r, cellCost), budget, truncated: false };
 
   for (let step = 0; step < devSteps; step++) {
     diffuse(cells, bonds);
@@ -37,7 +50,7 @@ export function develop(genome) {
         if (++ops > DEV_OP_BUDGET) { gi = genes.length; step = devSteps; break; }
         const g = genes[gi];
         if (!matches(g, sig)) continue;
-        applyAction(g, cell, ci, cells, bonds);
+        applyAction(g, cell, ci, cells, bonds, build, cellCost);
         if (++fired >= 3) break;   // komórka wykonuje najwyżej 3 działania na krok
       }
     }
@@ -86,7 +99,7 @@ export function develop(genome) {
     b.cellA = b.a; b.cellB = b.b;
   }
 
-  return finalize(genome, live, finalBonds);
+  return finalize(genome, live, finalBonds, build);
 }
 
 function makeCell(x, y, r, depth) {
@@ -131,12 +144,18 @@ function matches(g, sig) {
   return true;
 }
 
-function applyAction(g, cell, ci, cells, bonds) {
+function applyAction(g, cell, ci, cells, bonds, build, cellCost) {
   switch (g.act) {
     case ACT.DIVIDE: {
       if (cell.terminal || cells.length >= MAX_CELLS) return;
       const ang = g.p0 * TAU + g.p1 * 0.6;
       const childR = clamp(cell.r * (0.6 + (g.p2 + 1) * 0.28), 0.32, 2.2);
+
+      // Nowa komórka to nowa masa, a masy nie da się zrobić z niczego.
+      // Gdy energii budulcowej zabraknie, rozwój po prostu się zatrzymuje.
+      const cost = cellBuildCost(childR, cellCost);
+      if (build.spent + cost > build.budget) { build.truncated = true; return; }
+
       const d = cell.r + childR;
       let px = cell.x + Math.cos(ang) * d;
       let py = cell.y + Math.sin(ang) * d;
@@ -165,6 +184,7 @@ function applyAction(g, cell, ci, cells, bonds) {
       }
 
       const child = makeCell(px, py, childR, cell.depth + 1);
+      build.spent += cost;
       const bias = clamp(0.5 + g.p1 * 0.45, 0.05, 0.95);
       for (let i = 0; i < MORPHOGENS; i++) {
         child.m[i] = cell.m[i] * bias;
@@ -200,7 +220,13 @@ function applyAction(g, cell, ci, cells, bonds) {
       return;
     }
     case ACT.GROW: {
-      cell.r = clamp(cell.r + g.p1 * 0.3 * g.w, 0.3, 2.4);
+      const target = clamp(cell.r + g.p1 * 0.3 * g.w, 0.3, 2.4);
+      if (target > cell.r) {
+        const cost = cellBuildCost(target, cellCost) - cellBuildCost(cell.r, cellCost);
+        if (build.spent + cost > build.budget) { build.truncated = true; return; }
+        build.spent += cost;
+      }
+      cell.r = target;
       cell.stiff = clamp(cell.stiff + g.p2 * 0.3, -0.4, 1.5);
       return;
     }
@@ -283,7 +309,7 @@ function connectStragglers(cells, bonds) {
 }
 
 /** Zbiera fizyczne i metaboliczne konsekwencje wyewoluowanej budowy. */
-function finalize(genome, cells, bonds) {
+function finalize(genome, cells, bonds, build) {
   const P = genome.params;
   let mass = 0, area = 0, upkeep = 0, radius = 0;
   const cap = {
@@ -313,6 +339,8 @@ function finalize(genome, cells, bonds) {
 
   return {
     cells, bonds,
+    buildEnergy: build.spent,       // ile energii kosztowało złożenie tego ciała
+    truncated: build.truncated,     // rozwój przerwany brakiem energii rodzica
     cellCount: cells.length,
     bondCount: bonds.length,
     mass, area, radius: Math.max(0.6, radius),

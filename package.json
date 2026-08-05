@@ -13,6 +13,7 @@
     "uitest": "node tools/uitest.mjs",
     "check": "node tools/syntax.js",
     "pages": "node tools/pagestest.mjs",
-    "biogeneza": "node tools/biogeneza.js 5"
+    "biogeneza": "node tools/biogeneza.js 5",
+    "pokarm": "node tools/pokarm.js 12"
   }
 }

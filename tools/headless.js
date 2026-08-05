@@ -36,9 +36,13 @@ for (let t = 0; t < ticks; t++) {
     const genes = sim.organisms.reduce((s, o) => s + o.genome.genes.length, 0) / Math.max(1, sim.organisms.length);
     const cells = sim.organisms.reduce((s, o) => s + o.body.cellCount, 0) / Math.max(1, sim.organisms.length);
     const neur = sim.organisms.reduce((s, o) => s + o.brain.neurons.length, 0) / Math.max(1, sim.organisms.length);
+    const musc = sim.organisms.reduce((s, o) => s + o.brain.effectors.length, 0) / Math.max(1, sim.organisms.length);
+    const dig = sim.organisms.reduce((s, o) => s + o.gain.detritus, 0);
     console.log(`rok ${(t / TICKS_PER_YEAR).toFixed(1)}  org=${String(sim.organisms.length).padStart(4)}  `
       + `gat=${String(sim.species.aliveCount).padStart(3)}  geny=${genes.toFixed(1)}  `
-      + `kom=${cells.toFixed(2)}  neur=${neur.toFixed(2)}  pokol=${sim.stats.maxGeneration}`);
+      + `kom=${cells.toFixed(2)}  neur=${neur.toFixed(2)}  mies=${musc.toFixed(2)}  `
+      + `pokol=${String(sim.stats.maxGeneration).padStart(3)}  `
+      + `okruchy=${String(sim.world.food.count).padStart(4)}  zjedzone=${dig.toFixed(0)}`);
   }
 }
 const elapsed = Date.now() - t1;

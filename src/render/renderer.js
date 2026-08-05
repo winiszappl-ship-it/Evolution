@@ -11,7 +11,8 @@ export const OVERLAYS = [
   { key: 'temp', name: 'Temperatura' },
   { key: 'light', name: 'Światło' },
   { key: 'nutrient', name: 'Minerały' },
-  { key: 'detritus', name: 'Martwa materia' },
+  { key: 'detritus', name: 'Materia rozpuszczona' },
+  { key: 'food', name: 'Pokarm stały' },
   { key: 'oxygen', name: 'Tlen' },
   { key: 'sectors', name: 'Sektory i szczegółowość' },
   { key: 'species', name: 'Zasięgi gatunków' },
@@ -81,6 +82,7 @@ export class Renderer {
 
     this.drawOverlay(ctx, sx, sy, sw, sh, W, H);
     this.drawFires(ctx);
+    this.drawFood(ctx);
     this.drawOrganisms(ctx);
     this.drawWeather(ctx, W, H);
     this.drawDayNight(ctx, W, H);
@@ -99,6 +101,7 @@ export class Renderer {
       if (this.overlay === 'nutrient' || this.overlay === 'detritus' || this.overlay === 'oxygen') {
         w.refreshAll(sim.tick, sim.climate);
       }
+      if (this.overlay === 'food') this.buildFoodDensity();
       const octx = this.overlayCanvas.getContext('2d');
       const img = octx.createImageData(w.W, w.H);
       const d = img.data;
@@ -126,6 +129,11 @@ export class Renderer {
             [r, g, bl] = hslToRgb(0.08, 0.6, clamp(v, 0.02, 0.7));
             break;
           }
+          case 'food': {
+            const v = clamp(this._foodDensity[i] / 40, 0, 1);
+            [r, g, bl] = hslToRgb(0.09, 0.75, clamp(v, 0.02, 0.75));
+            break;
+          }
           case 'oxygen': {
             const v = clamp(w.oxygen[i] / 0.45, 0, 1);
             [r, g, bl] = hslToRgb(0.5, 0.9, clamp(v, 0.02, 0.85));
@@ -149,6 +157,37 @@ export class Renderer {
 
     if (this.overlay === 'sectors') this.drawSectorGrid(ctx);
     if (this.overlay === 'species') this.drawSpeciesRanges(ctx);
+  }
+
+  /** Zbiera okruchy w gęstość na kafel — inaczej przy oddaleniu byłyby niewidoczne. */
+  buildFoodDensity() {
+    const w = this.sim.world;
+    if (!this._foodDensity || this._foodDensity.length !== w.W * w.H) {
+      this._foodDensity = new Float32Array(w.W * w.H);
+    }
+    this._foodDensity.fill(0);
+    const f = w.food;
+    for (let i = 0; i < f.used.length; i++) {
+      if (!f.used[i]) continue;
+      this._foodDensity[w.tileOf(f.px[i], f.py[i])] += f.e[i];
+    }
+  }
+
+  /** Okruchy pokarmu — to, po co w ogóle warto się ruszyć. */
+  drawFood(ctx) {
+    const cam = this.camera;
+    if (cam.zoom < 0.55 || !this.sim.world.food.count) return;
+    const b = cam.viewBounds();
+    const z = cam.zoom;
+    ctx.fillStyle = 'rgba(198,152,86,0.8)';
+    ctx.beginPath();
+    this.sim.world.food.forEachInBounds(b, (x, y, e) => {
+      const p = cam.worldToScreen(x, y);
+      const r = Math.max(0.8, Math.min(3.5, 0.35 + Math.sqrt(e) * 0.22) * z * 0.45);
+      ctx.moveTo(p.x + r, p.y);
+      ctx.arc(p.x, p.y, r, 0, TAU);
+    });
+    ctx.fill();
   }
 
   drawSectorGrid(ctx) {
