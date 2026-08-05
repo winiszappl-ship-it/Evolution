@@ -307,7 +307,10 @@ export class Renderer {
 
       if (rpx < 2.2 || level <= 1) {
         ctx.fillStyle = hsl(hue, 0.7, clamp(0.4 + o.energy / (o.maxEnergy + 1) * 0.35, 0.25, 0.8));
-        const s = Math.max(1.1, rpx);
+        // Żywy organizm nigdy nie jest mniejszy niż dwa piksele. Pojedyncza
+        // komórka na mapie wielkości planety to inaczej jeden punkt, którego
+        // nie sposób wypatrzeć — a potem jej potomstwo „pojawia się znikąd".
+        const s = Math.max(2, rpx);
         ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
         continue;
       }

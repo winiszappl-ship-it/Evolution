@@ -7,6 +7,7 @@ import { el, openModal, closeModal, isModalOpen, modalDismissable, toast } from 
 import * as store from './persist/store.js';
 import { DEFAULT_PARAMS } from './world/worldgen.js';
 import { defaultDesign } from './bio/seed.js';
+import { findSeedSpot } from './bio/seedspot.js';
 import { TILE } from './world/world.js';
 import { TICKS_PER_YEAR } from './world/climate.js';
 import { bus } from './core/bus.js';
@@ -239,23 +240,14 @@ class App {
 
   // ---------------------------------------------------------------- interwencje
 
-  /** Wybór miejsca zasiewu. To decyzja gracza, nie preferencja silnika. */
+  /**
+   * Wybór miejsca zasiewu. To decyzja gracza, nie preferencja silnika, ale
+   * powinna opierać się na tym, co w danym miejscu faktycznie działa.
+   * Ocena patrzy na potencjał kafla, a nie na chwilową porę dnia — inaczej
+   * zasiew w nocy wybierałby los.
+   */
   findSeedSpot(source) {
-    const w = this.sim.world;
-    let best = null, bestScore = -1;
-    for (let a = 0; a < 400; a++) {
-      const i = this.sim.rng.int(w.W * w.H);
-      const b = w.biomeDefAt(i);
-      let score = 0;
-      if (source === 'photo') score = b.lightMul * (b.water ? 1.1 : 1) * (1 - w.depth[i]);
-      else if (source === 'absorb') score = (b.water ? 1.6 : 0.3) * b.nutrient;
-      else score = b.nutrient * (w.detritus[i] / 12 + 0.4);
-      const t = w.tempAt(i, this.sim.climate);
-      score *= Math.exp(-((t - 20) ** 2) / 1400);
-      score *= this.sim.rng.float(0.6, 1.4);
-      if (score > bestScore) { bestScore = score; best = i; }
-    }
-    return { x: (best % w.W) * TILE + TILE / 2, y: ((best / w.W) | 0) * TILE + TILE / 2 };
+    return findSeedSpot(this.sim.world, this.sim.climate, this.sim.rng, source);
   }
 
   findBiomeSpot(biomeId) {

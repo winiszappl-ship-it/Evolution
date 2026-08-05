@@ -81,11 +81,23 @@ export function genomeFromDesign(design, hue = 120) {
   // komórka rozrodcza
   g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (9 + 0.5) / TRAITS.length, 0.4, 0, 1));
 
-  // Wyciszony gen podziału. Nic nie robi, dopóki mutacja nie zmieni progu —
-  // ukryty potencjał wielokomórkowości, obecny od pierwszej chwili.
+  // Geny wyciszone: nic nie robią, dopóki mutacja nie obniży progu. To ukryty
+  // potencjał obecny od pierwszej chwili — nie zachowanie, tylko możliwość.
+  //
+  // Bez nich niektóre drogi ewolucji były zamknięte nie przez dobór, lecz przez
+  // sam zapis genomu. Zmiana źródła energii z fotosyntezy na trawienie wymaga
+  // jednej małej mutacji, bo te zdolności leżą obok siebie na liście cech;
+  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty fotosyntezy
+  // po drodze. W pomiarze na 2047 urodzonych organizmach tkanka kurczliwa
+  // pojawiła się cztery razy, a ani razu w ciele wielokomórkowym — czyli mięsień
+  // nie powstał nigdy. Osobny wyciszony gen daje tej ścieżce taki sam dostęp,
+  // jaki od początku miała wielokomórkowość.
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.DIVIDE, 0.25, 0, 0, 1));
-  // Wyciszony gen morfogenu — surowiec dla przyszłego różnicowania.
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.EMIT, 0.1, 0.8, 0, 1));
+  // kurczliwość — bez niej wiązanie między komórkami nigdy nie stanie się mięśniem
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (3 + 0.5) / TRAITS.length, 0.8, 0, 1));
+  // receptory — bez nich organizm nie ma czym odczytać gradientu pokarmu
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (5 + 0.5) / TRAITS.length, 0.7, 0.2, 1));
 
   return g;
 }

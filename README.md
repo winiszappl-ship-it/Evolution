@@ -350,6 +350,7 @@ node tools/pagestest.mjs                # czy działa serwowany z podkatalogu
 node tools/biogeneza.js 5               # czy nic nie powstaje z niczego
 node tools/pokarm.js 12                 # czy pokarm daje powód do ruchu
 node tools/walka.js 8                   # czy starcie działa i potrafi zabić
+node tools/start.js 40                  # gdzie ląduje pierwsza komórka i czy ruch jest osiągalny
 ```
 
 Test interfejsu wymaga Playwrighta — uruchamia prawdziwą przeglądarkę, przechodzi

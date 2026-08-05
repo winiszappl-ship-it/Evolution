@@ -124,7 +124,9 @@ export class Screens {
       closeModal();
       const cam = app.camera;
       const spot = app.findSeedSpot(design.source);
-      app.sim.seed(design, spot.x, spot.y);
+      const first = app.sim.seed(design, spot.x, spot.y);
+      // pierścień wokół pierwszej komórki — inaczej gracz jej po prostu nie znajdzie
+      if (first && app.renderer) app.renderer.selected = first;
       cam.setTarget(spot.x, spot.y);
       cam.tzoom = 6;
       app.paused = false;

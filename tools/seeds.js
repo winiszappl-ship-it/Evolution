@@ -4,28 +4,12 @@ import { Simulation } from '../src/sim/simulation.js';
 import { defaultDesign } from '../src/bio/seed.js';
 import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 import { TICKS_PER_YEAR } from '../src/world/climate.js';
-import { TILE } from '../src/world/world.js';
+// Ten sam wybór miejsca, którego używa gracz w grze — ten sam moduł, nie kopia.
+import { findSeedSpot } from '../src/bio/seedspot.js';
 
 const years = parseFloat(process.argv[2] || '10');
 const count = parseInt(process.argv[3] || '8', 10);
 const ticks = Math.round(years * TICKS_PER_YEAR);
-
-// Ten sam wybór miejsca, którego używa gracz w grze.
-function findSeedSpot(sim, source) {
-  const w = sim.world;
-  let best = 0, bestScore = -1;
-  for (let a = 0; a < 400; a++) {
-    const i = sim.rng.int(w.W * w.H);
-    const b = w.biomeDefAt(i);
-    let score = source === 'photo' ? b.lightMul * (b.water ? 1.1 : 1) * (1 - w.depth[i])
-      : source === 'absorb' ? (b.water ? 1.6 : 0.3) * b.nutrient
-        : b.nutrient * (w.detritus[i] / 12 + 0.4);
-    const t = w.tempAt(i, sim.climate);
-    score *= Math.exp(-((t - 20) ** 2) / 1400) * sim.rng.float(0.6, 1.4);
-    if (score > bestScore) { bestScore = score; best = i; }
-  }
-  return { x: (best % w.W) * TILE + TILE / 2, y: ((best / w.W) | 0) * TILE + TILE / 2 };
-}
 
 console.log(`${count} światów × ${years} lat\n`);
 console.log('ziarno        organizmy  gatunki  geny  komórki  neurony  mięśnie  pokolenie  diety');
@@ -34,7 +18,7 @@ let survived = 0;
 for (let s = 0; s < count; s++) {
   const seed = 'proba-' + s;
   const sim = new Simulation({ ...DEFAULT_PARAMS, seed, size: 'small' });
-  const spot = findSeedSpot(sim, 'photo');
+  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'photo');
   sim.seed(defaultDesign(), spot.x, spot.y);
   sim.setFocus(spot.x, spot.y, 700, 3);
   for (let t = 0; t < ticks; t++) sim.step(1);
