@@ -123,7 +123,7 @@ export class Screens {
       closeModal();
       const cam = app.camera;
       const spot = app.findSeedSpot(design.source);
-      app.sim.seed(design, spot.x, spot.y, 6);
+      app.sim.seed(design, spot.x, spot.y, 12);
       cam.setTarget(spot.x, spot.y);
       cam.tzoom = 6;
       app.paused = false;
@@ -253,7 +253,7 @@ export class Screens {
           sp.notes.length ? el('div', { class: 'section' },
             el('h4', { text: 'Notatki' }),
             sp.notes.slice(-6).map(n => el('div', { class: 'hint', text: '· ' + n })))
-            : null))),
+            : null)),
       el('div', { class: 'actions' },
         el('button', { text: 'Zapisz w Banku DNA', onclick: () => { app.saveSpeciesDNA(sp); } }),
         el('button', { text: 'Wprowadź do świata', onclick: () => { app.introduceGenome(genome, null, null, 4); closeModal(); } }),
@@ -320,17 +320,9 @@ export class Screens {
       bank.length ? bank.map(e => el('option', { value: e.id }, `${e.name} (${e.genome?.genes?.length ?? 0} genów)`))
         : el('option', { value: '' }, 'Bank DNA jest pusty'));
 
-    const place = (genomeFactory, label) => {
+    const place = (genomeFactory) => {
       const spot = state.biome >= 0 ? app.findBiomeSpot(state.biome) : null;
-      let n = 0;
-      for (let i = 0; i < state.count; i++) {
-        const g = genomeFactory();
-        if (!g) break;
-        const x = spot ? spot.x + sim.rng.gauss(0, 14) : null;
-        const y = spot ? spot.y + sim.rng.gauss(0, 14) : null;
-        if (app.introduceGenome(g, x, y, 1)) n++;
-      }
-      toast('Eksperyment', `${label}: wprowadzono ${n} organizmów.`);
+      app.introduceGenome(genomeFactory, spot ? spot.x : null, spot ? spot.y : null, state.count);
     };
 
     openModal(el('div', {},
@@ -353,9 +345,15 @@ export class Screens {
           el('div', { class: 'row' }, el('span', { text: 'Odchylenie klimatu' }), el('span', { text: `${sim.world.globalTempOffset.toFixed(2)}°` })))),
       el('div', { class: 'actions' },
         el('button', { class: 'primary', text: 'Nowa pierwsza komórka', onclick: () => { closeModal(); this.cellSetup(); } }),
-        el('button', { text: 'Losowe DNA', onclick: () => place(() => randomGenomeFor(sim), 'Losowe DNA') }),
-        el('button', { text: 'Wypuść z banku', onclick: () => { const e = store.listDNA().find(x => x.id === state.dna); if (!e) return toast('Brak DNA', 'Bank jest pusty.', 'warn'); place(() => Genome.deserialize(e.genome), e.name); } }),
-        el('button', { class: 'ghost', text: 'Zamknij', onclick: closeModal })));
+        el('button', { text: 'Losowe DNA', onclick: () => place(() => randomGenomeFor(sim)) }),
+        el('button', {
+          text: 'Wypuść z banku', onclick: () => {
+            const e = store.listDNA().find(x => x.id === state.dna);
+            if (!e) return toast('Brak DNA', 'Bank jest pusty.', 'warn');
+            place(() => Genome.deserialize(e.genome));
+          },
+        }),
+        el('button', { class: 'ghost', text: 'Zamknij', onclick: closeModal }))));
   }
 
   // ------------------------------------------------------------- kronika

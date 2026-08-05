@@ -1,0 +1,16 @@
+{
+  "name": "evolution",
+  "version": "0.5.0",
+  "description": "Symulator ewolucji bez zaprogramowanych organizmów — są tylko prawa świata.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes http-server -p 8000 -c-1 .",
+    "sim": "node tools/headless.js 20",
+    "seeds": "node tools/seeds.js 12 8",
+    "energy": "node tools/energy.js",
+    "profile": "node tools/profile.js 6",
+    "uitest": "node tools/uitest.mjs",
+    "check": "node tools/syntax.js"
+  }
+}

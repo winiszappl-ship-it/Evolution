@@ -63,7 +63,7 @@ export class Organism {
     this.deathCause = null;
 
     // przewaga w wyścigu o światło rośnie z zasięgiem ciała, ale nasyca się
-    this.lightEdge = 1 + Math.min(2.4, this.body.radius * 0.42);
+    this.lightEdge = 1 + Math.min(4, this.body.radius * 0.75);
     // pola, nie gettery — czytane w najgorętszej pętli symulacji
     this.radius = this.body.radius;
     this.mass = this.body.mass;
@@ -428,7 +428,7 @@ export class Organism {
     for (const k of Object.keys(frac)) if (frac[k] > best) { best = frac[k]; key = k; }
     const labels = {
       photo: 'fotosynteza', absorb: 'osmotrofia',
-      detritus: 'detrytus', predation: 'materia żywa',
+      detritus: 'rozkład materii', predation: 'materia żywa',
     };
     return { key, label: labels[key], frac, mixed: best < 0.6 };
   }

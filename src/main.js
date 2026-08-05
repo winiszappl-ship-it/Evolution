@@ -157,9 +157,24 @@ class App {
     requestAnimationFrame((t) => this.frame(t));
   }
 
+  /**
+   * Im szybciej gracz chce przewinąć czas, tym mniej sensu ma liczenie
+   * pojedynczych mięśni. Budżety szczegółowości kurczą się wraz z tempem —
+   * przy 1000× cały świat idzie w tryb zbiorczy.
+   */
+  applyDetailBudget() {
+    const s = this.paused ? 1 : this.speed;
+    const max = this.settings.maxDetail || 220;
+    if (s <= 5) { this.sim.maxFullDetail = max; this.sim.maxPointDetail = 850; }
+    else if (s <= 20) { this.sim.maxFullDetail = Math.round(max * 0.3); this.sim.maxPointDetail = 420; }
+    else if (s <= 100) { this.sim.maxFullDetail = 0; this.sim.maxPointDetail = 200; }
+    else { this.sim.maxFullDetail = 0; this.sim.maxPointDetail = 0; }
+  }
+
   runSteps(now) {
     const target = this.speed;
-    const budget = this.stepBudgetMs;
+    const budget = target >= 100 ? 16 : this.stepBudgetMs;
+    this.applyDetailBudget();
     const t0 = performance.now();
     let done = 0;
     while (done < target) {
@@ -319,14 +334,16 @@ class App {
     return { x: w.widthUnits / 2, y: w.heightUnits / 2 };
   }
 
-  introduceGenome(genome, x, y, count = 1) {
+  /** `source` to genom albo funkcja zwracająca nowy genom dla każdego osobnika. */
+  introduceGenome(source, x, y, count = 1) {
     if (!this.sim) return false;
     let n = 0;
     for (let i = 0; i < count; i++) {
-      const g = genome.clone();
+      const g = typeof source === 'function' ? source() : source.clone();
+      if (!g) break;
       const px = x ?? this.sim.rng.float(0, this.sim.world.widthUnits);
       const py = y ?? this.sim.rng.float(0, this.sim.world.heightUnits);
-      const o = this.sim.introduce(g, px + this.sim.rng.gauss(0, 10), py + this.sim.rng.gauss(0, 10));
+      const o = this.sim.introduce(g, px + this.sim.rng.gauss(0, 24), py + this.sim.rng.gauss(0, 24));
       if (o) n++;
     }
     if (n) {

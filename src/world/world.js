@@ -2,6 +2,7 @@ import { generateTerrain } from './worldgen.js';
 import { BIOME_DEF, BIOME, isWater } from './biomes.js';
 import { clamp, lerp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
+import { encodeU16, decodeU16 } from '../core/codec.js';
 
 export const TILE = 12;            // jednostki świata na kafel
 export const SECTOR_TILES = 16;    // kafle na krawędź sektora
@@ -21,6 +22,7 @@ export class World {
     this.detritus = new Float32Array(n);   // martwa materia organiczna
     this.oxygen = new Float32Array(n);
     this.nutrientCap = new Float32Array(n);
+    this.nutrientCapBase = new Float32Array(n);   // żyzność, do której gleba wraca
     this.burn = new Float32Array(n);       // aktywny pożar / lawa
     this.photoLoad = new Float32Array(n);    // ile powierzchni chwyta światło na kaflu
     this.mineralLoad = new Float32Array(n);  // łączne zapotrzebowanie na minerały
@@ -30,6 +32,7 @@ export class World {
       const b = BIOME_DEF[this.biome[i]];
       const cap = b.nutrient * (0.5 + this.moisture[i] * 0.9) * 100;
       this.nutrientCap[i] = cap;
+      this.nutrientCapBase[i] = cap;
       this.nutrient[i] = cap * 0.6;
       this.oxygen[i] = this.params.oxygen * b.oxyMul;
       this.detritus[i] = b.nutrient * 6;
@@ -177,6 +180,11 @@ export class World {
         this.detritus[i] *= keep;
         this.nutrient[i] = Math.min(this.nutrientCap[i] * 1.6, this.nutrient[i] + decayed * 0.85);
 
+        // gleba wyjałowiona przez suszę czy pożar odbudowuje się latami
+        const base = this.nutrientCapBase[i];
+        if (this.nutrientCap[i] !== base) {
+          this.nutrientCap[i] += (base - this.nutrientCap[i]) * (1 - Math.exp(-0.00025 * steps));
+        }
         // wietrzenie skał — powolne uzupełnianie minerałów do pojemności
         const cap = this.nutrientCap[i];
         const relax = 1 - Math.exp(-0.0008 * steps);
@@ -211,9 +219,9 @@ export class World {
   serialize() {
     return {
       params: this.params,
-      nutrient: Array.from(this.nutrient, v => Math.round(v * 10) / 10),
-      detritus: Array.from(this.detritus, v => Math.round(v * 10) / 10),
-      oxygen: Array.from(this.oxygen, v => Math.round(v * 1000) / 1000),
+      nutrient: encodeU16(this.nutrient, 4),
+      detritus: encodeU16(this.detritus, 4),
+      oxygen: encodeU16(this.oxygen, 40000),
       globalOxygen: this.globalOxygen,
       globalTempOffset: this.globalTempOffset,
       sectorTicks: this.sectors.map(s => s.lastTick),
@@ -222,9 +230,16 @@ export class World {
 
   static deserialize(data) {
     const w = new World(data.params);
-    if (data.nutrient) w.nutrient.set(data.nutrient);
-    if (data.detritus) w.detritus.set(data.detritus);
-    if (data.oxygen) w.oxygen.set(data.oxygen);
+    if (typeof data.nutrient === 'string') {
+      decodeU16(data.nutrient, 4, w.nutrient);
+      decodeU16(data.detritus, 4, w.detritus);
+      decodeU16(data.oxygen, 40000, w.oxygen);
+    } else {
+      // zapisy z wcześniejszej wersji trzymały surowe tablice
+      if (data.nutrient) w.nutrient.set(data.nutrient);
+      if (data.detritus) w.detritus.set(data.detritus);
+      if (data.oxygen) w.oxygen.set(data.oxygen);
+    }
     w.globalOxygen = data.globalOxygen ?? w.params.oxygen;
     w.globalTempOffset = data.globalTempOffset ?? 0;
     if (data.sectorTicks) data.sectorTicks.forEach((t, i) => { if (w.sectors[i]) w.sectors[i].lastTick = t; });

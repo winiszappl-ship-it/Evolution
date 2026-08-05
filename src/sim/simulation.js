@@ -16,6 +16,7 @@ export const MAX_POINT_DETAIL = 850;
 const POOL_INTERVAL = 16;
 const HASH_CELL = TILE;
 const MAX_NEIGHBORS = 24;
+const SAVE_SAMPLE = 500;   // ilu przedstawicieli DNA trafia do zapisu
 
 /**
  * Symulacja. Nie zna pojęcia gatunku roślinnego ani zwierzęcego, nie wybiera
@@ -43,6 +44,8 @@ export class Simulation {
     // poza nim symulacja przestałaby nadążać za obserwatorem.
     this.maxOrganisms = clamp(Math.round(this.world.W * this.world.H * 0.13), 600, 2600);
     this.maxFullDetail = MAX_FULL_DETAIL;
+    this.maxPointDetail = MAX_POINT_DETAIL;
+    this.poolInterval = POOL_INTERVAL;
     this.lastRecount = -1e9;
     this.epochs = 0;
     this.senseBuf = new Float64Array(64);
@@ -60,7 +63,8 @@ export class Simulation {
       const g = genomeFromDesign(design || defaultDesign(), this.rng.float(0, 360));
       const px = x ?? this.rng.float(0, this.world.widthUnits);
       const py = y ?? this.rng.float(0, this.world.heightUnits);
-      const o = this.introduce(g, px + this.rng.gauss(0, 8), py + this.rng.gauss(0, 8));
+      // rozrzut na kilka kafli — inaczej założyciele od razu zacieniają siebie
+      const o = this.introduce(g, px + this.rng.gauss(0, 36), py + this.rng.gauss(0, 36));
       if (o) results.push(o);
     }
     if (results.length) {
@@ -92,6 +96,9 @@ export class Simulation {
     o.energy = energy ?? o.body.buildCost * 1.6;
     o.heading = this.rng.float(0, TAU);
     o.speciesId = 0;
+    // sektor przypisujemy od razu — przy zgrubnym trybie siatka nie jest
+    // przebudowywana co takt, a nowy organizm musi gdzieś należeć
+    o._sector = this.world.sectorOf(o.x, o.y);
     const info = this.species.assign(o, this.tick);
     this.organisms.push(o);
     this.watcher.onBirth(o, info, this);
@@ -115,9 +122,17 @@ export class Simulation {
     climate.update(1);
     const tick = climate.tick;
 
-    this.assignSectors();
-    this.assignDetail();
-    this.buildHash();
+    // Gdy nikt nie ogląda pojedynczych organizmów, nie ma też sensu co takt
+    // przebudowywać całej struktury przestrzennej.
+    const coarse = this.maxFullDetail === 0 && this.maxPointDetail === 0;
+    this.poolInterval = coarse ? 64 : POOL_INTERVAL;
+    if (!coarse || tick % 5 === 0 || !this._spatialReady) {
+      this.assignSectors();
+      this.assignDetail();
+      this.buildHash();
+      this._spatialReady = true;
+    }
+    const POOL = this.poolInterval;
 
     const births = [];
     let died = 0;
@@ -130,8 +145,8 @@ export class Simulation {
 
       let dt = 1;
       if (detail === 0) {
-        if ((tick + o.id) % POOL_INTERVAL !== 0) continue;
-        dt = POOL_INTERVAL;
+        if ((tick + o.id) % POOL !== 0) continue;
+        dt = POOL;
       }
 
       world.refreshSector(sector, tick, climate);
@@ -171,6 +186,7 @@ export class Simulation {
     this.disasters.step(this, 1);
 
     for (const c of births) {
+      c._sector = world.sectorOf(c.x, c.y);
       const isolated = this.isIsolated(c);
       const info = this.species.assign(c, tick, isolated);
       this.organisms.push(c);
@@ -195,6 +211,7 @@ export class Simulation {
     if (tick - this.lastRecount >= 160) {
       this.lastRecount = tick;
       const gone = this.species.recount(this.organisms, tick);
+      this.species.prune();
       for (const s of gone) {
         if (s.peak >= 12) this.chronicle.record('extinction', `Gatunek ${s.name} wymarł po ${((tick - s.born) / TICKS_PER_YEAR).toFixed(1)} latach.`);
       }
@@ -324,7 +341,8 @@ export class Simulation {
     cand.sort((a, b) => (a._dist - a.activity * secSize) - (b._dist - b.activity * secSize));
 
     let fullBudget = this.maxFullDetail;
-    let pointBudget = MAX_POINT_DETAIL;
+    let pointBudget = this.maxPointDetail;
+    let activityBudget = Math.round(this.maxPointDetail * 0.3);
     let full = 0, point = 0;
     const fullRange = focus.r + secSize;
 
@@ -336,8 +354,11 @@ export class Simulation {
       }
       // Sektor liczony co takt, ale bez fizyki komórek. Reszta świata dostaje
       // rzadsze, zbiorcze aktualizacje — dokładnie tam, gdzie nikt nie patrzy.
-      if (pointBudget >= n || s.activity > 1.2) {
+      if (pointBudget >= n && pointBudget > 0) {
         s.detail = 1; pointBudget -= n; point += n;
+      } else if (s.activity > 1.2 && activityBudget >= n) {
+        // sektor, w którym coś się dzieje, nie zasypia — ale i on ma swój limit
+        s.detail = 1; activityBudget -= n; point += n;
       } else {
         s.detail = 0;
       }
@@ -390,14 +411,14 @@ export class Simulation {
     for (let i = 0; i < orgs.length; i++) {
       const o = orgs[i];
       o._dens = 0; o._cont = 0;
-      o._act = o._sector.detail !== 0 || (tick + o.id) % POOL_INTERVAL === 0;
+      o._act = o._sector.detail !== 0 || (tick + o.id) % this.poolInterval === 0;
     }
 
     for (let i = 0; i < orgs.length; i++) {
       const o = orgs[i];
       if (!o.alive || !o._act) continue;
       const sec = o._sector;
-      const dt = sec.detail === 0 ? POOL_INTERVAL : 1;
+      const dt = sec.detail === 0 ? this.poolInterval : 1;
       const near = this.queryHash(o.x, o.y, o.radius + 6, this._qbuf);
 
       for (let k = 0; k < near.length; k++) {
@@ -445,8 +466,11 @@ export class Simulation {
   feed(a, b, overlap, dt) {
     const digest = a.body.cap.digest;
     if (digest < 0.05 || !b.alive) return 0;
-    const defense = 1 + b.body.cap.armor * 0.05 + b.genome.params.membrane * 1.4
-      + b.body.cap.rigid * 0.02;
+    // Obrona to pancerz, błona i sztywność tkanki — a także sama wielkość:
+    // ciała większego od napastnika po prostu nie da się objąć.
+    const gape = 1 + Math.max(0, b.radius - a.radius) * 0.9;
+    const defense = (1 + b.body.cap.armor * 0.05 + b.genome.params.membrane * 1.4
+      + b.body.cap.rigid * 0.02) * gape;
     const power = digest * overlap * 0.09 * dt / defense;
     const take = Math.min(b.energy * 0.4, power * 12);
     if (take <= 0) return 0;
@@ -487,15 +511,46 @@ export class Simulation {
 
   // ---------------------------------------------------------------- zapis
 
-  serialize() {
+  /**
+   * Zapis nie utrwala każdego osobnika. Utrwala świat, historię, gatunki oraz
+   * reprezentatywną próbkę żywego DNA wraz z liczebnościami populacji — tyle,
+   * ile potrzeba, żeby świat dało się wznowić i żeby dało się analizować
+   * ewolucję. Konkretne ciała i tak są tylko chwilowym stanem.
+   */
+  serialize(sampleLimit = SAVE_SAMPLE) {
     this.world.refreshAll(this.tick, this.climate);
+    const bySpecies = new Map();
+    for (const o of this.organisms) {
+      let arr = bySpecies.get(o.speciesId);
+      if (!arr) { arr = []; bySpecies.set(o.speciesId, arr); }
+      arr.push(o);
+    }
+
+    const total = this.organisms.length;
+    const sample = [];
+    const populations = [];
+    for (const [sid, arr] of bySpecies) {
+      // co najmniej jeden osobnik z gatunku, reszta proporcjonalnie
+      const quota = total > sampleLimit
+        ? Math.max(1, Math.round(arr.length / total * sampleLimit))
+        : arr.length;
+      const step = Math.max(1, arr.length / quota);
+      const picked = [];
+      for (let k = 0; picked.length < quota && Math.floor(k * step) < arr.length; k++) {
+        picked.push(arr[Math.floor(k * step)]);
+      }
+      for (const o of picked) sample.push(o.serialize());
+      populations.push({ sp: sid, n: arr.length, saved: picked.length });
+    }
+
     return {
-      version: 1,
+      version: 2,
       world: this.world.serialize(),
       climate: this.climate.serialize(),
       species: this.species.serialize(),
       chronicle: this.chronicle.serialize(),
-      organisms: this.organisms.map(o => o.serialize()),
+      organisms: sample,
+      populations,
       stats: this.stats,
       epochs: this.epochs,
       rng: this.rng.serialize(),
@@ -521,6 +576,7 @@ export class Simulation {
       // Ciało odbudowujemy z DNA — bo DNA właśnie tym jest: instrukcją budowy.
       const g = Genome.deserialize(od.g);
       const o = new Organism(g, od.x, od.y, od.e, sim.world);
+      o._fp = g.fingerprint();
       o.id = od.id; o.age = od.a; o.speciesId = od.sp; o.parentId = od.pid;
       o.offspring = od.off; o.heading = od.h; o.integrity = od.it;
       o.measuredSpeed = od.ms || 0;
@@ -528,8 +584,36 @@ export class Simulation {
         o.gain.photo = od.gn[0]; o.gain.absorb = od.gn[1];
         o.gain.detritus = od.gn[2]; o.gain.predation = od.gn[3];
       }
+      o._sector = sim.world.sectorOf(o.x, o.y);
       sim.organisms.push(o);
     }
+
+    // Odtworzenie liczebności populacji z zapisanych przedstawicieli. Nie są to
+    // te same osobniki co przed zapisem — to ta sama populacja, nie ta sama chwila.
+    for (const p of data.populations || []) {
+      const members = sim.organisms.filter(o => o.speciesId === p.sp);
+      if (!members.length) continue;
+      let missing = p.n - members.length;
+      let i = 0;
+      while (missing-- > 0 && sim.organisms.length < sim.maxOrganisms) {
+        const src = members[i++ % members.length];
+        const g = src.genome.clone();
+        g.generation = src.generation;
+        const ang = sim.rng.float(0, TAU);
+        const d = sim.rng.float(2, 60);
+        const c = new Organism(g,
+          clamp(src.x + Math.cos(ang) * d, 2, sim.world.widthUnits - 3),
+          clamp(src.y + Math.sin(ang) * d, 2, sim.world.heightUnits - 3),
+          src.energy * sim.rng.float(0.5, 1), sim.world);
+        c.speciesId = src.speciesId;
+        c.generation = src.generation;
+        c._fp = src._fp;
+        c.age = src.age * sim.rng.float(0.2, 1);
+        c._sector = sim.world.sectorOf(c.x, c.y);
+        sim.organisms.push(c);
+      }
+    }
+
     sim.species.recount(sim.organisms, sim.tick);
     sim.updateStats();
     return sim;

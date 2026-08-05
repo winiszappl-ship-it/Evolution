@@ -296,7 +296,7 @@ function finalize(genome, cells, bonds) {
     const a = Math.PI * c.r * c.r;
     area += a;
     mass += a * P.cellCost * (1 + c.t[4] * 0.8 + c.t[8] * 1.1);
-    let u = 0.014;
+    let u = 0.011;
     for (let i = 0; i < TRAIT_COUNT; i++) {
       u += c.t[i] * TRAIT_UPKEEP[i];
       cap[keys[i]] += c.t[i] * a;

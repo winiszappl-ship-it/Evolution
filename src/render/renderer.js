@@ -94,6 +94,11 @@ export class Renderer {
     if (sim.tick - this.lastOverlayTick > 24 || this.overlayDirty) {
       this.lastOverlayTick = sim.tick;
       this.overlayDirty = false;
+      // Sektory bez życia śpią, więc ich chemia jest przestarzała. Skoro gracz
+      // chce ją zobaczyć, trzeba ją najpierw nadgonić.
+      if (this.overlay === 'nutrient' || this.overlay === 'detritus' || this.overlay === 'oxygen') {
+        w.refreshAll(sim.tick, sim.climate);
+      }
       const octx = this.overlayCanvas.getContext('2d');
       const img = octx.createImageData(w.W, w.H);
       const d = img.data;
@@ -337,7 +342,8 @@ export class Renderer {
     const cl = this.sim.climate;
     const dark = clamp(1 - cl.dayLight, 0, 1);
     if (dark > 0.01) {
-      ctx.fillStyle = `rgba(6,10,30,${dark * 0.62})`;
+      // noc przyciemnia i chłodzi barwy, ale świat musi pozostać czytelny
+      ctx.fillStyle = `rgba(14,22,54,${dark * 0.42})`;
       ctx.fillRect(0, 0, W, H);
     }
     if (cl.cloudiness > 0.5) {

@@ -48,6 +48,7 @@ export class HUD {
       detail: document.getElementById('statDetail'),
     };
     this.right = document.getElementById('panelRight');
+    this.toasts = document.getElementById('toasts');
     this.buildSpeeds();
     this.buildOverlays();
     this.lastPanelUpdate = 0;
@@ -98,7 +99,11 @@ export class HUD {
     const ti = sim.world.tileOf(cam.x, cam.y);
     t.temp.textContent = `${sim.world.tempAt(ti, sim.climate).toFixed(1)}°`;
     t.season.textContent = sim.climate.seasonName + (sim.climate.isNight ? ' · noc' : '');
-    t.speed.textContent = app.paused ? 'pauza' : `${app.speed}×`;
+    // Pokazujemy tempo faktycznie osiągnięte, nie żądane — przy dużej populacji
+    // symulacja nie zawsze nadąża i lepiej, żeby gracz o tym wiedział.
+    if (app.paused) t.speed.textContent = 'pauza';
+    else if (app.achievedSpeed < app.speed) t.speed.textContent = `${app.achievedSpeed}× z ${app.speed}×`;
+    else t.speed.textContent = `${app.speed}×`;
     t.detail.textContent = formatNumber(sim.stats.fullDetail);
     this.syncButtons();
 
@@ -120,12 +125,15 @@ export class HUD {
         this.right.appendChild(el('div', { class: 'btn-row' },
           el('button', { class: 'mini-btn', text: 'Zamknij', onclick: () => app.select(null) })));
         this.right.classList.remove('hidden');
+        this.toasts.classList.add('shifted');
         return;
       }
       this.right.classList.add('hidden');
+      this.toasts.classList.remove('shifted');
       return;
     }
     this.right.classList.remove('hidden');
+    this.toasts.classList.add('shifted');
     this.right.innerHTML = '';
     this.right.appendChild(organismPanel(o, app));
   }
@@ -154,7 +162,10 @@ export function organismPanel(o, app) {
     row('Wysokość', o.z > 0.05 ? `${o.z.toFixed(2)} (w powietrzu)` : 'na podłożu')));
 
   const dietRows = el('div', { class: 'section' }, el('h4', { text: 'Skąd bierze energię' }));
-  const labels = { photo: 'światło', absorb: 'minerały', detritus: 'martwa materia', predation: 'materia żywa' };
+  const labels = {
+    photo: 'światło', absorb: 'materia rozpuszczona',
+    detritus: 'materia stała', predation: 'materia żywa',
+  };
   const colors = { photo: '#6ee7a0', absorb: '#57d6ff', detritus: '#c8a06a', predation: '#ff6b6b' };
   if (d.key === 'none') {
     dietRows.appendChild(el('div', { class: 'hint', text: 'Jeszcze nic nie pozyskał.' }));

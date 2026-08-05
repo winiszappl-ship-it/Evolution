@@ -16,6 +16,7 @@ export class Disasters {
     this.fireTiles = new Set();
     this.cooldown = 0;
     this.impactWinter = 0;
+    this.lastEpidemic = -1e9;
   }
 
   step(sim, dt) {
@@ -49,7 +50,9 @@ export class Disasters {
     if (rng.chance(0.0009 * dt)) {
       const drought = climate.rain < 0.15 && climate.cloudiness < 0.4;
       if (drought) {
-        for (let i = 0; i < world.nutrientCap.length; i++) world.nutrientCap[i] *= 0.82;
+        for (let i = 0; i < world.nutrientCap.length; i++) {
+          world.nutrientCap[i] = Math.max(world.nutrientCapBase[i] * 0.3, world.nutrientCap[i] * 0.82);
+        }
         this.chronicle.record('disaster', 'Susza wyjałowiła glebę na znacznym obszarze.');
       } else if (climate.rain > 0.7) {
         for (let i = 0; i < world.nutrient.length; i++) {
@@ -168,11 +171,14 @@ export class Disasters {
   }
 
   maybeEpidemic(sim) {
-    // patogen potrzebuje gęstej populacji blisko spokrewnionych żywicieli
+    // Patogen potrzebuje gęstej populacji blisko spokrewnionych żywicieli,
+    // a po przejściu fali musi się odbudować — tak jak odporność populacji.
+    if (sim.tick - this.lastEpidemic < 2500) return;
     const species = sim.species.aliveSpecies();
     if (!species.length) return;
     const target = species[0];
     if (target.count < 40) return;
+    this.lastEpidemic = sim.tick;
     const virulence = clamp(target.count / 400, 0.05, 0.7);
     let hit = 0;
     for (const o of sim.organisms) {
@@ -185,9 +191,10 @@ export class Disasters {
         hit++;
       }
     }
-    if (hit > 5) {
+    if (hit > 20) {
       this.chronicle.record('disaster',
-        `Epidemia w populacji gatunku ${target.name}. Dotknęła ${hit} osobników.`);
+        `Epidemia w populacji gatunku ${target.name}. Dotknęła ${hit} osobników.`,
+        hit > target.count * 0.5);
     }
   }
 }

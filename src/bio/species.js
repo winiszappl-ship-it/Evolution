@@ -2,8 +2,8 @@ import { Genome } from './genome.js';
 import { coinName } from '../core/util.js';
 import { biomeName } from '../world/biomes.js';
 
-export const SPECIATION_THRESHOLD = 1.45;
-const ISOLATION_FACTOR = 0.58;   // izolacja geograficzna obniża próg
+export const SPECIATION_THRESHOLD = 1.0;
+const ISOLATION_FACTOR = 0.5;   // izolacja geograficzna obniża próg
 
 /**
  * Gatunek nie jest kategorią zdefiniowaną z góry. To linia potomków, która
@@ -54,8 +54,8 @@ export class Species {
       id: this.id, name: this.name, parent: this.parent, born: this.born, extinct: this.extinct,
       peak: this.peak, everBorn: this.everBorn, hue: this.hue, depth: this.depth,
       founderGenome: this.founderGenome, avg: this.avg, dietFrac: this.dietFrac,
-      biomes: Array.from(this.biomes.entries()), notes: this.notes,
-      fingerprint: Array.from(this.fingerprint),
+      biomes: Array.from(this.biomes.entries()), notes: this.notes.slice(-4),
+      // odcisk odtwarzamy z DNA założyciela — nie ma po co go zapisywać
     };
   }
 }
@@ -83,6 +83,7 @@ export class SpeciesRegistry {
   assign(org, tick, isolated = false) {
     const parentSpecies = this.list.get(org.speciesId);
     const fp = org.genome.fingerprint();
+    org._fp = fp;
     if (!parentSpecies) {
       const s = this.create(org.genome, tick);
       org.speciesId = s.id;
@@ -113,8 +114,18 @@ export class SpeciesRegistry {
       const s = this.list.get(o.speciesId);
       if (!s) continue;
       s.count++;
-      if (!s._acc) s._acc = { cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, gen: 0, cx: 0, cy: 0, d: { photo: 0, absorb: 0, detritus: 0, predation: 0 }, dn: 0 };
+      if (!s._acc) {
+        s._acc = {
+          cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, gen: 0, cx: 0, cy: 0,
+          d: { photo: 0, absorb: 0, detritus: 0, predation: 0 }, dn: 0,
+          fp: new Float32Array(s.fingerprint.length), fpN: 0,
+        };
+      }
       const a = s._acc;
+      if (o._fp && o._fp.length === a.fp.length) {
+        for (let k = 0; k < a.fp.length; k++) a.fp[k] += o._fp[k];
+        a.fpN++;
+      }
       a.cells += o.body.cellCount;
       a.mass += o.body.mass;
       a.energy += o.energy;
@@ -145,6 +156,14 @@ export class SpeciesRegistry {
           generation: a.gen / n,
         };
         s.cx = a.cx / n; s.cy = a.cy / n;
+        // Punkt odniesienia gatunku podąża za jego populacją. Powolna zmiana
+        // całej linii to jeszcze nie nowy gatunek — nowy gatunek powstaje
+        // dopiero wtedy, gdy jakaś jej część odejdzie od reszty.
+        if (a.fpN > 0) {
+          for (let k = 0; k < s.fingerprint.length; k++) {
+            s.fingerprint[k] = s.fingerprint[k] * 0.88 + (a.fp[k] / a.fpN) * 0.12;
+          }
+        }
         if (a.dn > 0) for (const k of Object.keys(s.dietFrac)) s.dietFrac[k] = a.d[k] / a.dn;
       } else if (s.extinct === null && s.everBorn > 0) {
         s.extinct = tick;
@@ -153,6 +172,32 @@ export class SpeciesRegistry {
     }
     this.aliveCount = alive;
     return newlyExtinct;
+  }
+
+  /**
+   * Historia świata nie może rosnąć w nieskończoność. Usuwamy wyłącznie
+   * ślepe zaułki: wymarłe linie bez potomstwa, które nigdy nie zdobyły
+   * liczącej się populacji. Wszystko, co coś po sobie zostawiło, zostaje.
+   */
+  prune(maxSpecies = 900) {
+    if (this.list.size <= maxSpecies) return 0;
+    const candidates = [];
+    for (const s of this.list.values()) {
+      if (s.count > 0 || s.children.length > 0) continue;
+      if (s.peak >= 8) continue;
+      candidates.push(s);
+    }
+    candidates.sort((a, b) => (a.peak - b.peak) || (a.born - b.born));
+    let removed = 0;
+    const target = this.list.size - maxSpecies;
+    for (const s of candidates) {
+      if (removed >= target) break;
+      const parent = this.list.get(s.parent);
+      if (parent) parent.children = parent.children.filter(id => id !== s.id);
+      this.list.delete(s.id);
+      removed++;
+    }
+    return removed;
   }
 
   aliveSpecies() {
@@ -169,7 +214,10 @@ export class SpeciesRegistry {
     for (const sd of d.list || []) {
       const s = Object.create(Species.prototype);
       Object.assign(s, sd);
-      s.fingerprint = Float32Array.from(sd.fingerprint || []);
+      s.fingerprint = sd.fingerprint
+        ? Float32Array.from(sd.fingerprint)
+        : Genome.deserialize(sd.founderGenome).fingerprint();
+      s.notes = sd.notes || [];
       s.biomes = new Map(sd.biomes || []);
       s.children = [];
       s.count = 0;
