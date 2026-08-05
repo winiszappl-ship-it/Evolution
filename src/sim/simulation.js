@@ -1,7 +1,6 @@
 import { World, TILE, SECTOR_TILES } from '../world/world.js';
 import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
-import { Organism, DETAIL, resetOrgSeq, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
-import { Genome } from '../bio/genome.js';
+import { Organism, DETAIL, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
 import { SpeciesRegistry } from '../bio/species.js';
 import { Chronicle, Watcher } from './chronicle.js';
 import { Disasters } from './disasters.js';
@@ -16,7 +15,6 @@ export const MAX_POINT_DETAIL = 850;
 const POOL_INTERVAL = 16;
 const HASH_CELL = TILE;
 const MAX_NEIGHBORS = 24;
-const SAVE_SAMPLE = 500;   // ilu przedstawicieli DNA trafia do zapisu
 
 /**
  * Symulacja. Nie zna pojęcia gatunku roślinnego ani zwierzęcego, nie wybiera
@@ -56,44 +54,51 @@ export class Simulation {
 
   // ---------------------------------------------------------------- interwencje
 
-  /** Gracz zasiewa pierwszą komórkę. Od tej chwili nie ma już wpływu na linię. */
-  seed(design, x, y, count = 1) {
-    const results = [];
-    for (let i = 0; i < count; i++) {
-      const g = genomeFromDesign(design || defaultDesign(), this.rng.float(0, 360));
-      const px = x ?? this.rng.float(0, this.world.widthUnits);
-      const py = y ?? this.rng.float(0, this.world.heightUnits);
-      // rozrzut na kilka kafli — inaczej założyciele od razu zacieniają siebie
-      const o = this.introduce(g, px + this.rng.gauss(0, 36), py + this.rng.gauss(0, 36));
-      if (o) results.push(o);
-    }
-    if (results.length) {
-      const first = this.organisms.length === results.length;
-      this.chronicle.record('life',
-        first ? 'Powstała pierwsza komórka. Świat przestał być martwy.'
-          : 'Gracz zasiał nową linię komórkową.', first);
-      this.chronicle.unlock('firstcell', 'Pierwsza komórka', 'Życie pojawiło się na tej planecie.');
-      if (!first) this.epochs++;
-    }
-    return results;
+  /**
+   * Gracz zasiewa pierwszą komórkę. Dokładnie jedną — cała późniejsza
+   * populacja musi z niej pochodzić przez podziały. To jedyny moment, w którym
+   * życie pojawia się w tym świecie inaczej niż z innego życia, i jest to akt
+   * z zewnątrz, spoza praw tego świata.
+   */
+  seed(design, x, y) {
+    const g = genomeFromDesign(design || defaultDesign(), this.rng.float(0, 360));
+    const px = x ?? this.rng.float(0, this.world.widthUnits);
+    const py = y ?? this.rng.float(0, this.world.heightUnits);
+    const o = this.introduce(g, px, py, null, 'player');
+    if (!o) return null;
+
+    const first = this.organisms.length === 1;
+    this.chronicle.record('life',
+      first ? 'Powstała pierwsza komórka. Świat przestał być martwy.'
+        : 'Gracz zasiał nową pierwszą komórkę — początek osobnej linii życia.', true);
+    this.chronicle.unlock('firstcell', 'Pierwsza komórka', 'Życie pojawiło się na tej planecie.');
+    if (!first) this.epochs++;
+    return o;
   }
 
   seedRandom(x, y) {
     const g = randomGenome(this.rng);
     const o = this.introduce(g,
       x ?? this.rng.float(0, this.world.widthUnits),
-      y ?? this.rng.float(0, this.world.heightUnits));
+      y ?? this.rng.float(0, this.world.heightUnits), null, 'player');
     if (o) this.chronicle.record('life', 'Do świata trafiła komórka o losowym DNA.');
     return o;
   }
 
-  /** Wprowadzenie dowolnego genomu — używane też przez Bank DNA. */
-  introduce(genome, x, y, energy = null) {
+  /**
+   * Wprowadzenie organizmu spoza obiegu rozmnażania. Każde takie wejście musi
+   * podać swoje pochodzenie — silnik nie ma sposobu, by powołać życie sam.
+   */
+  introduce(genome, x, y, energy = null, origin = 'player') {
     if (this.organisms.length >= this.maxOrganisms) return null;
     const px = clamp(x, 2, this.world.widthUnits - 3);
     const py = clamp(y, 2, this.world.heightUnits - 3);
     const o = new Organism(genome, px, py, null, this.world);
-    o.energy = energy ?? o.body.buildCost * 1.6;
+    // Komórka zasiana przez gracza jest gotowa do życia: ma pełny zapas energii.
+    // To jednorazowe wyposażenie, a nie stały przywilej.
+    o.energy = energy ?? (origin === 'player' ? o.maxEnergy : o.body.buildCost * 1.6);
+    o.origin = origin;
+    o.ancestorId = o.id;
     o.heading = this.rng.float(0, TAU);
     o.speciesId = 0;
     // sektor przypisujemy od razu — przy zgrubnym trybie siatka nie jest
@@ -105,10 +110,18 @@ export class Simulation {
     return o;
   }
 
+  /** Klon powstaje z ciała, które już istnieje — nie z niczego. */
   cloneOrganism(org, jitter = 12) {
-    if (!org) return null;
-    return this.introduce(org.genome.clone(),
-      org.x + this.rng.gauss(0, jitter), org.y + this.rng.gauss(0, jitter), org.energy * 0.8);
+    if (!org || !org.alive) return null;
+    const c = this.introduce(org.genome.clone(),
+      org.x + this.rng.gauss(0, jitter), org.y + this.rng.gauss(0, jitter),
+      org.energy * 0.8, 'clone');
+    if (c) {
+      c.parentId = org.id;
+      c.ancestorId = org.ancestorId || org.id;
+      c.generation = org.generation;
+    }
+    return c;
   }
 
   // ---------------------------------------------------------------- pętla
@@ -507,115 +520,5 @@ export class Simulation {
 
   setFocus(x, y, r, zoom) {
     this.focus.x = x; this.focus.y = y; this.focus.r = r; this.focus.zoom = zoom;
-  }
-
-  // ---------------------------------------------------------------- zapis
-
-  /**
-   * Zapis nie utrwala każdego osobnika. Utrwala świat, historię, gatunki oraz
-   * reprezentatywną próbkę żywego DNA wraz z liczebnościami populacji — tyle,
-   * ile potrzeba, żeby świat dało się wznowić i żeby dało się analizować
-   * ewolucję. Konkretne ciała i tak są tylko chwilowym stanem.
-   */
-  serialize(sampleLimit = SAVE_SAMPLE) {
-    this.world.refreshAll(this.tick, this.climate);
-    const bySpecies = new Map();
-    for (const o of this.organisms) {
-      let arr = bySpecies.get(o.speciesId);
-      if (!arr) { arr = []; bySpecies.set(o.speciesId, arr); }
-      arr.push(o);
-    }
-
-    const total = this.organisms.length;
-    const sample = [];
-    const populations = [];
-    for (const [sid, arr] of bySpecies) {
-      // co najmniej jeden osobnik z gatunku, reszta proporcjonalnie
-      const quota = total > sampleLimit
-        ? Math.max(1, Math.round(arr.length / total * sampleLimit))
-        : arr.length;
-      const step = Math.max(1, arr.length / quota);
-      const picked = [];
-      for (let k = 0; picked.length < quota && Math.floor(k * step) < arr.length; k++) {
-        picked.push(arr[Math.floor(k * step)]);
-      }
-      for (const o of picked) sample.push(o.serialize());
-      populations.push({ sp: sid, n: arr.length, saved: picked.length });
-    }
-
-    return {
-      version: 2,
-      world: this.world.serialize(),
-      climate: this.climate.serialize(),
-      species: this.species.serialize(),
-      chronicle: this.chronicle.serialize(),
-      organisms: sample,
-      populations,
-      stats: this.stats,
-      epochs: this.epochs,
-      rng: this.rng.serialize(),
-      seq: { org: this.organisms.reduce((m, o) => Math.max(m, o.id), 0) + 1 },
-    };
-  }
-
-  static deserialize(data) {
-    const sim = new Simulation(data.world.params);
-    sim.world = World.deserialize(data.world);
-    sim.climate = new Climate(sim.world);
-    sim.climate.load(data.climate);
-    sim.species = SpeciesRegistry.deserialize(data.species);
-    sim.chronicle = new Chronicle();
-    sim.chronicle.load(data.chronicle);
-    sim.watcher = new Watcher(sim.chronicle);
-    sim.disasters = new Disasters(sim.world, sim.climate, sim.chronicle);
-    sim.rng = RNG.deserialize(data.rng ?? 12345);
-    sim.epochs = data.epochs || 0;
-    resetOrgSeq(data.seq?.org || 1);
-
-    for (const od of data.organisms || []) {
-      // Ciało odbudowujemy z DNA — bo DNA właśnie tym jest: instrukcją budowy.
-      const g = Genome.deserialize(od.g);
-      const o = new Organism(g, od.x, od.y, od.e, sim.world);
-      o._fp = g.fingerprint();
-      o.id = od.id; o.age = od.a; o.speciesId = od.sp; o.parentId = od.pid;
-      o.offspring = od.off; o.heading = od.h; o.integrity = od.it;
-      o.measuredSpeed = od.ms || 0;
-      if (od.gn) {
-        o.gain.photo = od.gn[0]; o.gain.absorb = od.gn[1];
-        o.gain.detritus = od.gn[2]; o.gain.predation = od.gn[3];
-      }
-      o._sector = sim.world.sectorOf(o.x, o.y);
-      sim.organisms.push(o);
-    }
-
-    // Odtworzenie liczebności populacji z zapisanych przedstawicieli. Nie są to
-    // te same osobniki co przed zapisem — to ta sama populacja, nie ta sama chwila.
-    for (const p of data.populations || []) {
-      const members = sim.organisms.filter(o => o.speciesId === p.sp);
-      if (!members.length) continue;
-      let missing = p.n - members.length;
-      let i = 0;
-      while (missing-- > 0 && sim.organisms.length < sim.maxOrganisms) {
-        const src = members[i++ % members.length];
-        const g = src.genome.clone();
-        g.generation = src.generation;
-        const ang = sim.rng.float(0, TAU);
-        const d = sim.rng.float(2, 60);
-        const c = new Organism(g,
-          clamp(src.x + Math.cos(ang) * d, 2, sim.world.widthUnits - 3),
-          clamp(src.y + Math.sin(ang) * d, 2, sim.world.heightUnits - 3),
-          src.energy * sim.rng.float(0.5, 1), sim.world);
-        c.speciesId = src.speciesId;
-        c.generation = src.generation;
-        c._fp = src._fp;
-        c.age = src.age * sim.rng.float(0.2, 1);
-        c._sector = sim.world.sectorOf(c.x, c.y);
-        sim.organisms.push(c);
-      }
-    }
-
-    sim.species.recount(sim.organisms, sim.tick);
-    sim.updateStats();
-    return sim;
   }
 }

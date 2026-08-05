@@ -23,9 +23,6 @@ class App {
     this.renderer = null;
     this.screens = new Screens(this);
     this.lastFrame = performance.now();
-    this.lastAutosave = performance.now();
-    this.worldId = null;
-    this.worldName = null;
     this.stepBudgetMs = 11;
     this.achievedSpeed = 0;
 
@@ -47,29 +44,15 @@ class App {
   // ---------------------------------------------------------------- start
 
   boot() {
-    const lastId = store.lastWorldId();
-    let loaded = false;
-    if (lastId) {
-      const data = store.loadWorld(lastId);
-      if (data) {
-        try {
-          this.attach(Simulation.deserialize(data));
-          this.worldId = lastId;
-          loaded = true;
-        } catch (e) {
-          console.warn('Nie udało się wczytać ostatniego świata', e);
-        }
-      }
-    }
-    if (!loaded) {
-      // W tle menu zawsze coś żyje — świat demonstracyjny z własnym ziarnem.
-      const params = { ...DEFAULT_PARAMS, seed: 'menu-' + Math.floor(Math.random() * 99999) };
-      this.attach(new Simulation(params));
-      const spot = this.findSeedSpot('photo');
-      this.sim.seed(defaultDesign(), spot.x, spot.y, 8);
-      this.camera.setTarget(spot.x, spot.y);
-      this.camera.tzoom = this.camera.fitZoom() * 2.4;
-    }
+    // Nie ma czego wczytywać. Każde uruchomienie to nowa planeta — w tle menu
+    // toczy się świat, który istnieje wyłącznie teraz.
+    const params = { ...DEFAULT_PARAMS, seed: 'menu-' + Math.floor(Math.random() * 99999) };
+    this.attach(new Simulation(params));
+    const spot = this.findSeedSpot('photo');
+    this.sim.seed(defaultDesign(), spot.x, spot.y);
+    this.camera.setTarget(spot.x, spot.y);
+    this.camera.tzoom = this.camera.fitZoom() * 2.4;
+
     this.paused = false;
     this.speed = 5;
     this.screens.mainMenu();
@@ -87,48 +70,10 @@ class App {
 
   newWorld(params) {
     this.attach(new Simulation(params));
-    this.worldId = null;
-    this.worldName = params.seed;
     this.paused = false;
     this.speed = 1;
     this.sim.chronicle.record('world', `Powstał świat o ziarnie „${params.seed}". Jeszcze nic w nim nie żyje.`, true);
     toast('Świat gotowy', 'Planeta istnieje. Życia na niej nie ma.');
-  }
-
-  loadWorld(id) {
-    const data = store.loadWorld(id);
-    if (!data) return toast('Błąd', 'Nie znaleziono zapisu.', 'bad');
-    try {
-      this.attach(Simulation.deserialize(data));
-      this.worldId = id;
-      this.paused = false;
-      toast('Wczytano', `Rok ${Math.floor(this.sim.year)}, ${this.sim.organisms.length} organizmów.`);
-    } catch (e) {
-      console.error(e);
-      toast('Błąd wczytywania', String(e.message || e), 'bad');
-    }
-  }
-
-  saveWorld(name, isCheckpoint = false) {
-    if (!this.sim) return;
-    const nm = name || this.worldName || `Świat ${this.sim.world.params.seed}`;
-    const meta = {
-      id: isCheckpoint ? null : this.worldId,
-      year: this.sim.year, seed: this.sim.world.params.seed,
-      organisms: this.sim.organisms.length, species: this.sim.species.aliveCount,
-    };
-    try {
-      const id = store.saveWorld(nm, this.sim.serialize(), meta);
-      if (id) {
-        if (!isCheckpoint) this.worldId = id;
-        this.worldName = nm;
-        toast(isCheckpoint ? 'Punkt zapisu' : 'Zapisano świat', `${nm} — rok ${Math.floor(this.sim.year)}`);
-      } else {
-        toast('Zapis nieudany', 'Brak miejsca w pamięci przeglądarki.', 'bad');
-      }
-    } catch (e) {
-      toast('Zapis nieudany', String(e.message || e), 'bad');
-    }
   }
 
   applySettings(s) {
@@ -145,12 +90,11 @@ class App {
     this.lastFrame = now;
 
     if (this.sim) {
-      if (!this.paused) this.runSteps(now);
+      if (!this.paused) this.runSteps();
       this.camera.update(dt);
       this.sim.setFocus(this.camera.x, this.camera.y, this.camera.viewRadius(), this.camera.zoom / this.camera.fitZoom());
       this.renderer.draw(dt);
       if (this.settings.showUI) this.hud.update();
-      this.maybeAutosave(now);
     }
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -169,7 +113,7 @@ class App {
     else { this.sim.maxFullDetail = 0; this.sim.maxPointDetail = 0; }
   }
 
-  runSteps(now) {
+  runSteps() {
     const target = this.speed;
     const budget = target >= 100 ? 16 : this.stepBudgetMs;
     this.applyDetailBudget();
@@ -181,13 +125,6 @@ class App {
       if (performance.now() - t0 > budget) break;
     }
     this.achievedSpeed = done;
-  }
-
-  maybeAutosave(now) {
-    if (!this.settings.autosave || !this.settings.autosaveInterval) return;
-    if (now - this.lastAutosave < this.settings.autosaveInterval * 1000) return;
-    this.lastAutosave = now;
-    this.saveWorld();
   }
 
   // ---------------------------------------------------------------- sterowanie
@@ -332,25 +269,25 @@ class App {
     return { x: w.widthUnits / 2, y: w.heightUnits / 2 };
   }
 
-  /** `source` to genom albo funkcja zwracająca nowy genom dla każdego osobnika. */
-  introduceGenome(source, x, y, count = 1) {
+  /**
+   * Wprowadza do świata jeden organizm z zachowanego DNA. Zawsze jeden —
+   * populacja może rosnąć wyłącznie przez rozmnażanie tego, co już żyje.
+   * `source` to genom albo funkcja, która go zwraca.
+   */
+  introduceGenome(source, x, y) {
     if (!this.sim) return false;
-    let n = 0;
-    for (let i = 0; i < count; i++) {
-      const g = typeof source === 'function' ? source() : source.clone();
-      if (!g) break;
-      const px = x ?? this.sim.rng.float(0, this.sim.world.widthUnits);
-      const py = y ?? this.sim.rng.float(0, this.sim.world.heightUnits);
-      const o = this.sim.introduce(g, px + this.sim.rng.gauss(0, 24), py + this.sim.rng.gauss(0, 24));
-      if (o) n++;
-    }
-    if (n) {
-      this.sim.chronicle.record('life', `Do świata wprowadzono ${n} organizmów z zachowanego DNA.`);
-      toast('Wprowadzono DNA', `${n} organizmów trafiło do świata.`);
-    } else {
+    const g = typeof source === 'function' ? source() : source.clone();
+    if (!g) return false;
+    const px = x ?? this.sim.rng.float(0, this.sim.world.widthUnits);
+    const py = y ?? this.sim.rng.float(0, this.sim.world.heightUnits);
+    const o = this.sim.introduce(g, px, py, null, 'player');
+    if (!o) {
       toast('Nie udało się', 'Świat osiągnął limit organizmów.', 'warn');
+      return false;
     }
-    return n > 0;
+    this.sim.chronicle.record('life', 'Do świata wprowadzono organizm z zachowanego DNA.');
+    toast('Wprowadzono DNA', 'Jeden organizm trafił do świata. Reszta zależy od niego.');
+    return true;
   }
 
   focusSpecies(sp) {

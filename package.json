@@ -12,6 +12,7 @@
     "profile": "node tools/profile.js 6",
     "uitest": "node tools/uitest.mjs",
     "check": "node tools/syntax.js",
-    "pages": "node tools/pagestest.mjs"
+    "pages": "node tools/pagestest.mjs",
+    "biogeneza": "node tools/biogeneza.js 5"
   }
 }

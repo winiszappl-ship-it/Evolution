@@ -122,20 +122,14 @@ await page.waitForTimeout(1200);
 await shot('09-nakladka-sektory');
 await page.evaluate(() => window.evolution.setOverlay('none'));
 
-// zapis i odczyt
-const saved = await page.evaluate(() => {
-  window.evolution.saveWorld('test automatyczny');
-  return window.evolution.worldId;
-});
-console.log('zapis świata:', saved);
-await page.waitForTimeout(500);
-const reloaded = await page.evaluate((id) => {
-  window.evolution.loadWorld(id);
-  return { organizmy: window.evolution.sim.organisms.length, rok: window.evolution.sim.year };
-}, saved);
-console.log('odczyt świata:', JSON.stringify(reloaded));
-await page.waitForTimeout(1200);
-await shot('10-po-odczycie');
+// świat nie ma zapisu — sprawdzamy, że nie da się go odtworzyć
+const noSave = await page.evaluate(() => ({
+  saveWorld: typeof window.evolution.saveWorld,
+  loadWorld: typeof window.evolution.loadWorld,
+  serialize: typeof window.evolution.sim.serialize,
+}));
+console.log('brak zapisu świata:', JSON.stringify(noSave));
+await shot('10-bez-zapisu');
 
 console.log('\n=== błędy konsoli ===');
 if (errors.length) errors.slice(0, 25).forEach(e => console.log('  ' + e.slice(0, 400)));

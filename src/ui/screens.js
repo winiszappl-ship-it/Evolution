@@ -19,11 +19,10 @@ export class Screens {
     const has = !!app.sim;
     const box = el('div', {},
       el('h1', { text: 'EVOLUTION' }),
-      el('p', { class: 'lead', text: 'Laboratorium ewolucji. Nie ma tu zwycięstwa ani końca — tylko świat, jego prawa i to, co z nich wyniknie.' }),
+      el('p', { class: 'lead', text: 'Laboratorium ewolucji. Nie ma tu zwycięstwa, końca ani zapisu — planeta istnieje tak długo, jak długo na nią patrzysz.' }),
       el('div', { class: 'menu-list' },
         has ? el('button', { onclick: () => closeModal() }, 'Wróć do świata', el('small', { text: `rok ${formatNumber(app.sim.year)}, ${app.sim.organisms.length} organizmów` })) : null,
         el('button', { onclick: () => this.worldSetup() }, 'Nowa Symulacja', el('small', { text: 'Ustal warunki początkowe i wygeneruj planetę' })),
-        el('button', { onclick: () => this.loadWorld() }, 'Wczytaj Świat', el('small', { text: 'Zapisane planety' })),
         el('button', { onclick: () => this.dnaBank() }, 'Bank DNA', el('small', { text: 'Zachowane genomy i kolekcje' })),
         el('button', { onclick: () => this.encyclopedia() }, 'Encyklopedia Gatunków', el('small', { text: 'Wszystko, co kiedykolwiek żyło w tym świecie' })),
         el('button', { onclick: () => this.lab() }, 'Laboratorium', el('small', { text: 'Eksperymenty na żywym świecie' })),
@@ -34,16 +33,18 @@ export class Screens {
 
   exit() {
     const app = this.app;
-    confirmBox('Zakończyć?', 'Świat zostanie zapisany. Symulacja zatrzyma się.', () => {
-      if (app.sim) app.saveWorld();
-      app.paused = true;
-      openModal(el('div', {},
-        el('h1', { text: 'EVOLUTION' }),
-        el('p', { class: 'lead', text: 'Świat zapisany. Planeta czeka.' }),
-        el('div', { class: 'actions' },
-          el('button', { class: 'primary', text: 'Wróć do menu', onclick: () => this.mainMenu() }))),
-        { dismissable: false });
-    }, 'Zakończ');
+    confirmBox('Zakończyć?',
+      'Tego świata nie da się zapisać ani odtworzyć. Zamknięcie go kończy jego '
+      + 'historię na zawsze. Genomy, które chcesz zachować, zapisz wcześniej w Banku DNA.',
+      () => {
+        app.paused = true;
+        openModal(el('div', {},
+          el('h1', { text: 'EVOLUTION' }),
+          el('p', { class: 'lead', text: 'Ta planeta się skończyła. Następna będzie inna.' }),
+          el('div', { class: 'actions' },
+            el('button', { class: 'primary', text: 'Wróć do menu', onclick: () => this.mainMenu() }))),
+          { dismissable: false });
+      }, 'Zakończ ten świat');
   }
 
   // ------------------------------------------------------------- nowy świat
@@ -123,12 +124,13 @@ export class Screens {
       closeModal();
       const cam = app.camera;
       const spot = app.findSeedSpot(design.source);
-      app.sim.seed(design, spot.x, spot.y, 12);
+      app.sim.seed(design, spot.x, spot.y);
       cam.setTarget(spot.x, spot.y);
       cam.tzoom = 6;
       app.paused = false;
       app.hud.syncButtons();
-      toast('Życie zasiane', 'Od tej chwili nie masz już wpływu na tę linię.');
+      toast('Życie zasiane',
+        'Jedna komórka. Wszystko, co powstanie dalej, musi pochodzić od niej.');
     });
 
     openModal(el('div', {},
@@ -142,34 +144,6 @@ export class Screens {
         el('button', { class: 'ghost', text: first ? 'Zostaw świat pusty' : 'Anuluj', onclick: () => { closeModal(); if (first) toast('Świat bez życia', 'Możesz zasiać komórkę w dowolnej chwili.'); } }))),
       { dismissable: true });
     sync();
-  }
-
-  // ------------------------------------------------------------- wczytywanie
-  loadWorld() {
-    const app = this.app;
-    const worlds = store.listWorlds().sort((a, b) => b.saved - a.saved);
-    const body = worlds.length ? el('table', { class: 'data' },
-      el('tr', {}, el('th', { text: 'Nazwa' }), el('th', { text: 'Ziarno' }),
-        el('th', { class: 'num', text: 'Rok' }), el('th', { class: 'num', text: 'Organizmy' }),
-        el('th', { class: 'num', text: 'Gatunki' }), el('th', { text: '' })),
-      worlds.map(w => el('tr', { class: 'clickable' },
-        el('td', { text: w.name }),
-        el('td', { class: 'mono', text: String(w.seed) }),
-        el('td', { class: 'num', text: formatNumber(w.year) }),
-        el('td', { class: 'num', text: formatNumber(w.organisms) }),
-        el('td', { class: 'num', text: formatNumber(w.species) }),
-        el('td', {},
-          el('button', { class: 'mini-btn', text: 'Wczytaj', onclick: () => { closeModal(); app.loadWorld(w.id); } }),
-          ' ',
-          el('button', { class: 'mini-btn', text: '✕', onclick: (e) => { e.stopPropagation(); store.deleteWorld(w.id); this.loadWorld(); } })))))
-      : el('div', { class: 'empty', text: 'Nie ma jeszcze zapisanych światów.' });
-
-    openModal(el('div', {},
-      el('h2', { text: 'Wczytaj świat' }),
-      body,
-      el('div', { class: 'actions' },
-        app.sim ? el('button', { text: 'Zapisz obecny świat', onclick: () => { app.saveWorld(); this.loadWorld(); } }) : null,
-        el('button', { class: 'ghost', text: 'Wstecz', onclick: () => this.mainMenu() }))));
   }
 
   // ------------------------------------------------------------- encyklopedia
@@ -256,7 +230,7 @@ export class Screens {
             : null)),
       el('div', { class: 'actions' },
         el('button', { text: 'Zapisz w Banku DNA', onclick: () => { app.saveSpeciesDNA(sp); } }),
-        el('button', { text: 'Wprowadź do świata', onclick: () => { app.introduceGenome(genome, null, null, 4); closeModal(); } }),
+        el('button', { text: 'Wprowadź do świata', onclick: () => { app.introduceGenome(genome); closeModal(); } }),
         sp.count > 0 ? el('button', { text: 'Pokaż na mapie', onclick: () => { closeModal(); app.focusSpecies(sp); } }) : null,
         el('button', { class: 'ghost', text: 'Wstecz', onclick: () => this.encyclopedia() })));
     openModal(box);
@@ -283,7 +257,7 @@ export class Screens {
           el('td', { class: 'num', text: String(e.genome?.genes?.length ?? 0) }),
           el('td', { class: 'hint', text: e.origin || '—' }),
           el('td', {},
-            app.sim ? el('button', { class: 'mini-btn', text: 'Wypuść', onclick: () => { app.introduceGenome(Genome.deserialize(e.genome), null, null, 3); } }) : null,
+            app.sim ? el('button', { class: 'mini-btn', text: 'Wypuść', onclick: () => { app.introduceGenome(Genome.deserialize(e.genome)); } }) : null,
             ' ',
             el('button', { class: 'mini-btn', text: 'Eksport', onclick: () => exportJSON(e.name, e) }),
             ' ',
@@ -310,7 +284,7 @@ export class Screens {
     const app = this.app, sim = app.sim;
     if (!sim) return this.mainMenu();
     const bank = store.listDNA();
-    const state = { count: 5, biome: -1, dna: bank[0]?.id || '' };
+    const state = { biome: -1, dna: bank[0]?.id || '' };
 
     const biomeSel = el('select', { onchange: e => state.biome = parseInt(e.target.value, 10) },
       el('option', { value: '-1' }, 'Dowolne miejsce'),
@@ -322,15 +296,14 @@ export class Screens {
 
     const place = (genomeFactory) => {
       const spot = state.biome >= 0 ? app.findBiomeSpot(state.biome) : null;
-      app.introduceGenome(genomeFactory, spot ? spot.x : null, spot ? spot.y : null, state.count);
+      app.introduceGenome(genomeFactory, spot ? spot.x : null, spot ? spot.y : null);
     };
 
     openModal(el('div', {},
       el('h2', { text: 'Laboratorium' }),
-      el('p', { class: 'lead', text: 'Możesz zasiać życie, ale nie możesz nim pokierować. Wszystko, co tu zrobisz, świat i tak rozstrzygnie po swojemu.' }),
+      el('p', { class: 'lead', text: 'Możesz zasiać życie, ale nie możesz nim pokierować. Każde wprowadzenie to jeden organizm — populacja musi odrosnąć sama.' }),
       el('div', { class: 'split' },
         el('div', {},
-          slider('Liczba organizmów', state.count, 1, 40, 1, '', v => state.count = v),
           el('div', { class: 'field' }, el('label', {}, el('span', { text: 'Miejsce wprowadzenia' })), biomeSel),
           el('div', { class: 'field' }, el('label', {}, el('span', { text: 'Genom z banku' })), dnaSel)),
         el('div', {},
@@ -368,7 +341,7 @@ export class Screens {
     const entries = sim.chronicle.entries.filter(e => filter === 'all' || e.kind === filter).slice().reverse();
     openModal(el('div', {},
       el('h2', { text: 'Kronika świata' }),
-      el('p', { class: 'lead', text: 'Czasu nie da się cofnąć. Można go tylko przeczytać.' }),
+      el('p', { class: 'lead', text: 'Czasu nie da się cofnąć ani zapisać. Można go tylko przeczytać, póki ten świat trwa.' }),
       tabs,
       entries.length ? el('div', { class: 'log' },
         entries.map(e => el('div', { class: 'entry ' + e.kind + (e.important ? ' important' : '') },
@@ -376,7 +349,6 @@ export class Screens {
           el('div', { text: e.text }))))
         : el('div', { class: 'empty', text: 'Jeszcze nic się nie wydarzyło.' }),
       el('div', { class: 'actions' },
-        el('button', { text: 'Zrób punkt zapisu', onclick: () => { app.saveWorld(prompt('Nazwa punktu zapisu:', `Rok ${Math.floor(sim.year)}`) || undefined, true); this.chronicle(filter); } }),
         el('button', { class: 'ghost', text: 'Zamknij', onclick: closeModal }))));
   }
 
@@ -389,17 +361,20 @@ export class Screens {
       el('div', { class: 'form-grid' },
         el('div', {},
           slider('Maksymalna liczba organizmów z pełną fizyką', s.maxDetail, 20, 600, 10,
-            'Wyższa wartość daje dokładniejszą fizykę kosztem płynności.', v => s.maxDetail = v),
-          slider('Autozapis co ile sekund', s.autosaveInterval, 30, 900, 30,
-            '0 wyłącza autozapis.', v => s.autosaveInterval = v, v => `${v} s`)),
+            'Wyższa wartość daje dokładniejszą fizykę kosztem płynności.', v => s.maxDetail = v)),
         el('div', {},
           el('label', { class: 'field' },
-            el('span', {}, el('input', { type: 'checkbox', checked: s.autosave, onchange: e => s.autosave = e.target.checked }), ' Autozapis świata')),
-          el('label', { class: 'field' },
-            el('span', {}, el('input', { type: 'checkbox', checked: s.showUI, onchange: e => s.showUI = e.target.checked }), ' Pokazuj interfejs')),
-          el('p', { class: 'hint', text: 'Tab ukrywa interfejs w każdej chwili. Esc otwiera menu.' }))),
+            el('span', {}, el('input', {
+              type: 'checkbox', checked: s.showUI,
+              onchange: e => s.showUI = e.target.checked,
+            }), ' Pokazuj interfejs')),
+          el('p', { class: 'hint', text: 'Tab ukrywa interfejs w każdej chwili. Esc otwiera menu.' }),
+          el('p', { class: 'hint', text: 'Świat nie jest nigdzie zapisywany. Trwały jest wyłącznie Bank DNA.' }))),
       el('div', { class: 'actions' },
-        el('button', { class: 'primary', text: 'Zapisz', onclick: () => { app.applySettings(s); closeModal(); toast('Zapisano', 'Ustawienia zaktualizowane.'); } }),
+        el('button', {
+          class: 'primary', text: 'Zapisz ustawienia',
+          onclick: () => { app.applySettings(s); closeModal(); toast('Zapisano', 'Ustawienia zaktualizowane.'); },
+        }),
         el('button', { class: 'ghost', text: 'Wstecz', onclick: () => app.sim ? closeModal() : this.mainMenu() }))));
   }
 }

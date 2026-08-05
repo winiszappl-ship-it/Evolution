@@ -48,16 +48,6 @@ export class Species {
     for (const [b, c] of this.biomes) if (c > best) { best = c; bid = b; }
     return bid >= 0 ? biomeName(bid) : '—';
   }
-
-  serialize() {
-    return {
-      id: this.id, name: this.name, parent: this.parent, born: this.born, extinct: this.extinct,
-      peak: this.peak, everBorn: this.everBorn, hue: this.hue, depth: this.depth,
-      founderGenome: this.founderGenome, avg: this.avg, dietFrac: this.dietFrac,
-      biomes: Array.from(this.biomes.entries()), notes: this.notes.slice(-4),
-      // odcisk odtwarzamy z DNA założyciela — nie ma po co go zapisywać
-    };
-  }
 }
 
 export class SpeciesRegistry {
@@ -202,30 +192,5 @@ export class SpeciesRegistry {
 
   aliveSpecies() {
     return Array.from(this.list.values()).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
-  }
-
-  serialize() {
-    return { nextId: this.nextId, list: Array.from(this.list.values(), s => s.serialize()) };
-  }
-
-  static deserialize(d) {
-    const r = new SpeciesRegistry();
-    r.nextId = d.nextId || 1;
-    for (const sd of d.list || []) {
-      const s = Object.create(Species.prototype);
-      Object.assign(s, sd);
-      s.fingerprint = sd.fingerprint
-        ? Float32Array.from(sd.fingerprint)
-        : Genome.deserialize(sd.founderGenome).fingerprint();
-      s.notes = sd.notes || [];
-      s.biomes = new Map(sd.biomes || []);
-      s.children = [];
-      s.count = 0;
-      r.list.set(s.id, s);
-    }
-    for (const s of r.list.values()) {
-      if (s.parent && r.list.has(s.parent)) r.list.get(s.parent).children.push(s.id);
-    }
-    return r;
   }
 }

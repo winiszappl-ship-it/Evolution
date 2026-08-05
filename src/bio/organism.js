@@ -4,7 +4,6 @@ import { Genome } from './genome.js';
 import { clamp, TAU } from '../core/util.js';
 
 let ORG_SEQ = 1;
-export function resetOrgSeq(v = 1) { ORG_SEQ = v; }
 
 export const DETAIL = { POOL: 0, POINT: 1, FULL: 2 };
 
@@ -46,6 +45,14 @@ export class Organism {
     this.parentId = 0;
     this.offspring = 0;
     this.generation = genome.generation;
+
+    // Skąd wziął się ten organizm. Silnik nie potrafi stworzyć życia sam:
+    // 'parent' — powstał z podziału innego organizmu,
+    // 'clone'  — kopia istniejącego ciała, wykonana ręką gracza,
+    // 'player' — gracz zasiał go z zewnątrz, poza prawami tego świata,
+    // 'load'   — wczytany z zapisu; żył wcześniej i miał wtedy swoje pochodzenie.
+    this.origin = 'parent';
+    this.ancestorId = 0;   // założyciel całej linii, aż do aktu stworzenia
 
     // pomiar własnego ruchu — używany, gdy organizm nie jest liczony w pełni
     this.measuredSpeed = 0;
@@ -407,6 +414,8 @@ export class Organism {
     // część energii przepada przy budowie nowego ciała — nic nie jest za darmo
     const child = new Organism(childGenome, cx, cy, give * 0.85, world);
     child.parentId = this.id;
+    child.origin = 'parent';
+    child.ancestorId = this.ancestorId || this.id;
     child.speciesId = this.speciesId;
     child.heading = rng.float(0, TAU);
 
@@ -430,18 +439,5 @@ export class Organism {
       detritus: 'rozkład materii', predation: 'materia żywa',
     };
     return { key, label: labels[key], frac, mixed: best < 0.6 };
-  }
-
-  serialize() {
-    return {
-      id: this.id, g: this.genome.serialize(), x: Math.round(this.x * 10) / 10,
-      y: Math.round(this.y * 10) / 10, e: Math.round(this.energy * 10) / 10,
-      a: Math.round(this.age), sp: this.speciesId, pid: this.parentId,
-      off: this.offspring, h: Math.round(this.heading * 100) / 100,
-      it: Math.round(this.integrity * 100) / 100,
-      gn: [this.gain.photo, this.gain.absorb, this.gain.detritus, this.gain.predation]
-        .map(v => Math.round(v * 10) / 10),
-      ms: Math.round(this.measuredSpeed * 1000) / 1000,
-    };
   }
 }

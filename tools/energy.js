@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 
 const sim = new Simulation({ ...DEFAULT_PARAMS, seed: process.argv[2] || 'test-alpha', size: 'small' });
 const spot = { x: sim.world.widthUnits / 2, y: sim.world.heightUnits / 2 };
-const [o] = sim.seed(defaultDesign(), spot.x, spot.y, 1);
+const o = sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 900, 4);
 
 const ti = sim.world.tileOf(o.x, o.y);

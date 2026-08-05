@@ -32,20 +32,6 @@ export class Chronicle {
     bus.emit('achievement', a);
     return true;
   }
-
-  serialize() {
-    return {
-      entries: this.entries.slice(-MAX_ENTRIES),
-      achievements: Array.from(this.achievements.values()),
-      records: this.records,
-    };
-  }
-
-  load(d) {
-    this.entries = d.entries || [];
-    this.achievements = new Map((d.achievements || []).map(a => [a.key, a]));
-    this.records = d.records || {};
-  }
 }
 
 /**

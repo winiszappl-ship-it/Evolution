@@ -8,7 +8,8 @@ energii. Wszystko, co żyje, musi powstać samo — przez mutacje DNA i dobór
 naturalny.
 
 Gracz tworzy planetę, projektuje pierwszą komórkę i od tej chwili już tylko
-obserwuje. Nie ma zwycięstwa, nie ma zakończenia, nie ma cofania czasu.
+obserwuje. Nie ma zwycięstwa, nie ma zakończenia, nie ma cofania czasu — i nie
+ma zapisu. Każda planeta istnieje raz.
 
 ## Uruchomienie
 
@@ -32,9 +33,9 @@ wskazać gałąź i katalog `/ (root)`.
 Plik `.nojekyll` wyłącza przetwarzanie przez Jekyll — statyczne pliki mają
 trafiać do przeglądarki takie, jakie są.
 
-Uwaga: świat zapisuje się w `localStorage` przeglądarki, osobno dla każdej
-domeny. Zapisy z `localhost` nie przeniosą się na adres `github.io` — genomy
-da się jednak przenieść ręcznie przez eksport i import w Banku DNA.
+Uwaga: Bank DNA leży w `localStorage` przeglądarki, osobno dla każdej domeny.
+Kolekcja z `localhost` nie pojawi się pod adresem `github.io` — genomy da się
+przenieść ręcznie przez eksport i import w Banku DNA.
 
 ## Sterowanie
 
@@ -45,13 +46,35 @@ da się jednak przenieść ręcznie przez eksport i import w Banku DNA.
 | `Tab` | ukryj lub pokaż interfejs |
 | `Esc` | menu główne |
 | `[` `]` | poziom przybliżenia: świat → biom → organizm → budowa → komórki |
-| `C` `E` `B` `L` `N` | kronika, encyklopedia, bank DNA, laboratorium, nowa komórka |
+| `C` `E` `B` `L` `N` | kronika, encyklopedia, Bank DNA, laboratorium, nowa komórka |
 | `F` | śledź zaznaczony organizm |
 
 Kółko myszy przybliża w miejsce kursora, przeciągnięcie przesuwa mapę,
 kliknięcie zaznacza organizm, podwójne kliknięcie zaczyna go śledzić.
 
 ## Jak to działa
+
+### Życie powstaje tylko z życia
+
+Silnik nie potrafi powołać organizmu ani komórki. Nie ma w nim żadnej ścieżki,
+która tworzyłaby żywe ciało z niczego — ani przy wczytywaniu zapisu, ani przy
+odtwarzaniu populacji, ani przy żadnym zdarzeniu świata.
+
+Komórka może powstać wyłącznie przez podział innej komórki, w trakcie rozwoju
+zarodkowego. Organizm może powstać wyłącznie przez rozmnożenie innego
+organizmu. Każdy nosi zapis swojego pochodzenia: wskazanie rodzica oraz
+założyciela całej swojej linii.
+
+Jedynym wyjątkiem jest ręka gracza. Gracz może zasiać pierwszą komórkę —
+dokładnie jedną — wypuścić jeden organizm z Banku DNA albo skopiować istniejące
+ciało. To akt z zewnątrz, spoza praw tego świata, i jest odnotowywany w kronice
+jako osobny początek życia. Cała reszta populacji musi z tego jednego ciała
+wyrosnąć przez podziały.
+
+Reguła jest pilnowana testem: `node tools/biogeneza.js` sprawdza po tysiącach
+pokoleń, że każdy żyjący organizm ma wcześniej istniejącego rodzica i że cała
+populacja wywodzi się z tej jednej zasianej komórki. Sprawdza też, że w silniku
+nie istnieje żadna droga odtworzenia świata z danych.
 
 ### DNA opisuje budowanie, nie zbudowane
 
@@ -176,15 +199,20 @@ Budżety szczegółowości kurczą się wraz z żądanym tempem. Przy 1000× ca�
 przechodzi w tryb zbiorczy, bo nikt i tak nie ogląda wtedy pojedynczych mięśni.
 Górny pasek pokazuje tempo faktycznie osiągnięte, a nie żądane.
 
-### Zapis to świat i populacje, nie chwila
+### Świata nie da się zapisać
 
-Zapisywane są: ziarno, stan chemiczny mapy (binarnie, nie jako JSON z
-liczbami), klimat, pełna historia gatunków, kronika, osiągnięcia oraz
-reprezentatywna próbka żywego DNA wraz z liczebnościami populacji. Przy
-wczytaniu populacje są odtwarzane z tych przedstawicieli.
+Nie ma zapisu planety i nie ma jej wczytywania. Zamknięcie karty kończy historię
+tego świata na zawsze.
 
-To nie są te same osobniki co przed zapisem — to ta sama populacja. Konkretne
-ciała są i tak tylko chwilowym stanem, a pamięć przeglądarki ma twardy limit.
+To nie jest brak funkcji, tylko ta sama zasada, co zakaz cofania czasu.
+Wczytanie zapisu byłoby cofnięciem czasu tylnymi drzwiami: pozwalałoby
+powtórzyć wymieranie, sprawdzić drugie rozgałęzienie, obejść skutki suszy.
+Świat, który da się przeładować, przestaje być jednorazowy — a to jego
+jednorazowość jest tu jedyną stawką.
+
+Trwały zostaje wyłącznie Bank DNA, bo genom to informacja, a nie stan świata.
+Zapisany genom można wypuścić do dowolnej przyszłej planety — jako jeden
+organizm, który musi sobie w niej poradzić sam.
 
 ## Struktura projektu
 
@@ -197,7 +225,7 @@ src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,
 src/sim/                   pętla symulacji, katastrofy, kronika, osiągnięcia
 src/render/                kamera i rysowanie
 src/ui/                    panele, ekrany, elementy interfejsu
-src/persist/               zapis świata i Bank DNA w pamięci przeglądarki
+src/persist/               Bank DNA i ustawienia w pamięci przeglądarki
 tools/                     testy i profilowanie poza przeglądarką
 ```
 
@@ -210,6 +238,7 @@ node tools/energy.js                    # bilans energetyczny jednej komórki
 node tools/profile.js 6                 # gdzie schodzi czas w takcie
 node tools/uitest.mjs                   # test interfejsu w przeglądarce
 node tools/pagestest.mjs                # czy działa serwowany z podkatalogu
+node tools/biogeneza.js 5               # czy nic nie powstaje z niczego
 ```
 
 Test interfejsu wymaga Playwrighta — uruchamia prawdziwą przeglądarkę, przechodzi
@@ -217,8 +246,9 @@ przez wszystkie ekrany i zgłasza każdy błąd konsoli.
 
 ## Czego tu nie ma i nie będzie
 
-Cofania czasu. Zwycięstwa. Punktacji. Drzewka technologii. Gotowych gatunków do
-odblokowania. Bilansowania rozgrywki pod kątem „ciekawości".
+Cofania czasu. Zapisu świata. Zwycięstwa. Punktacji. Drzewka technologii.
+Gotowych gatunków do odblokowania. Bilansowania rozgrywki pod kątem
+„ciekawości".
 
 Ewolucja jest ciekawa sama z siebie albo wcale. Autor tej gry też nie wie, co
 wyewoluuje w twoim świecie po milionie taktów.

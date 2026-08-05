@@ -65,14 +65,4 @@ export class Climate {
     const m = 0.35 + this.windSpeed * 0.4;
     return { x: Math.cos(a) * m + this.windX * 0.25, y: Math.sin(a) * m + this.windY * 0.25 };
   }
-
-  serialize() {
-    return { tick: this.tick, axialTilt: this.axialTilt };
-  }
-
-  load(data) {
-    this.tick = data.tick || 0;
-    if (data.axialTilt) this.axialTilt = data.axialTilt;
-    this.update(0);
-  }
 }

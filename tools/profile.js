@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 import { TICKS_PER_YEAR } from '../src/world/climate.js';
 
 const sim = new Simulation({ ...DEFAULT_PARAMS, seed: 'test-alpha', size: 'small' });
-sim.seed(defaultDesign(), sim.world.widthUnits / 2, sim.world.heightUnits / 2, 10);
+sim.seed(defaultDesign(), sim.world.widthUnits / 2, sim.world.heightUnits / 2);
 sim.setFocus(sim.world.widthUnits / 2, sim.world.heightUnits / 2, 600, 4);
 
 const times = {};

@@ -1,6 +1,7 @@
-const KEY_WORLDS = 'evolution.worlds';
+// Światów się nie zapisuje. Każda planeta istnieje raz i nie da się do niej
+// wrócić — tak samo jak nie da się cofnąć czasu w jej wnętrzu. Trwały jest
+// tylko Bank DNA, bo genom to informacja, a nie stan świata.
 const KEY_BANK = 'evolution.dnabank';
-const KEY_LAST = 'evolution.last';
 const KEY_SETTINGS = 'evolution.settings';
 
 function read(key, fallback) {
@@ -22,41 +23,6 @@ function write(key, value) {
     return false;
   }
 }
-
-// ------------------------------------------------------------------ światy
-
-export function listWorlds() {
-  return read(KEY_WORLDS, []).map(w => ({ id: w.id, name: w.name, saved: w.saved, year: w.year, seed: w.seed, organisms: w.organisms, species: w.species }));
-}
-
-export function saveWorld(name, snapshot, meta) {
-  const worlds = read(KEY_WORLDS, []);
-  const id = meta.id || ('w' + Date.now().toString(36));
-  const entry = {
-    id, name, saved: Date.now(),
-    year: meta.year, seed: meta.seed, organisms: meta.organisms, species: meta.species,
-    data: snapshot,
-  };
-  const idx = worlds.findIndex(w => w.id === id);
-  if (idx >= 0) worlds[idx] = entry; else worlds.push(entry);
-  while (worlds.length > 12) worlds.shift();
-  const ok = write(KEY_WORLDS, worlds);
-  if (ok) write(KEY_LAST, { id });
-  return ok ? id : null;
-}
-
-export function loadWorld(id) {
-  const worlds = read(KEY_WORLDS, []);
-  const w = worlds.find(x => x.id === id);
-  return w ? w.data : null;
-}
-
-export function deleteWorld(id) {
-  const worlds = read(KEY_WORLDS, []).filter(w => w.id !== id);
-  write(KEY_WORLDS, worlds);
-}
-
-export function lastWorldId() { return read(KEY_LAST, {}).id || null; }
 
 // ------------------------------------------------------------------ bank DNA
 
@@ -87,9 +53,6 @@ export function collections() {
 
 export const DEFAULT_SETTINGS = {
   showUI: true,
-  autosave: true,
-  autosaveInterval: 120,
-  particles: true,
   maxDetail: 220,
   overlay: 'none',
 };

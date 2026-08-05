@@ -68,8 +68,6 @@ export const PARAM_DEF = {
 export const PARAM_KEYS = Object.keys(PARAM_DEF);
 
 let GENOME_SEQ = 1;
-export function resetGenomeSeq(v = 1) { GENOME_SEQ = v; }
-export function peekGenomeSeq() { return GENOME_SEQ; }
 
 export function makeGene(rng) {
   return {

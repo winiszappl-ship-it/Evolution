@@ -23,9 +23,9 @@ for (let i = 0; i < sim.world.biome.length; i++) counts[sim.world.biome[i]] = (c
 console.log('Biomy:', Object.entries(counts).map(([k, v]) => `${k}:${v}`).join(' '));
 
 const spot = { x: sim.world.widthUnits / 2, y: sim.world.heightUnits / 2 };
-sim.seed(defaultDesign(), spot.x, spot.y, 10);
+sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 600, 4);
-console.log(`\nZasiano ${sim.organisms.length} komórek.\n`);
+console.log(`\nZasiano ${sim.organisms.length} komórkę. Reszta musi z niej powstać.\n`);
 
 const t1 = Date.now();
 let report = 0;
@@ -58,12 +58,3 @@ for (const e of sim.chronicle.entries.slice(-15)) {
 
 console.log('\n--- Osiągnięcia ---');
 for (const a of sim.chronicle.achievements.values()) console.log(`  ${a.title}: ${a.desc}`);
-
-// test zapisu i odczytu
-const snap = JSON.parse(JSON.stringify(sim.serialize()));
-const size = JSON.stringify(snap).length;
-const restored = Simulation.deserialize(snap);
-console.log(`\nZapis: ${(size / 1024).toFixed(0)} kB, po odczycie ${restored.organisms.length} organizmów, `
-  + `${restored.species.list.size} gatunków, rok ${restored.year.toFixed(2)}`);
-restored.step(50);
-console.log(`Po wznowieniu: ${restored.organisms.length} organizmów — odczyt działa.`);

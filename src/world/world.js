@@ -2,7 +2,6 @@ import { generateTerrain } from './worldgen.js';
 import { BIOME_DEF, isWater } from './biomes.js';
 import { clamp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
-import { encodeU16, decodeU16 } from '../core/codec.js';
 
 export const TILE = 12;            // jednostki świata na kafel
 export const SECTOR_TILES = 16;    // kafle na krawędź sektora
@@ -202,7 +201,7 @@ export class World {
     }
   }
 
-  /** Nadgania wszystkie sektory — wykorzystywane przy zapisie i statystykach. */
+  /** Nadgania wszystkie sektory — potrzebne, gdy gracz ogląda nakładkę z danymi. */
   refreshAll(tick, climate) {
     for (const s of this.sectors) this.refreshSector(s, tick, climate);
   }
@@ -214,35 +213,5 @@ export class World {
     }
     const n = this.nutrient.length;
     return { nutrient: nut, detritus: det, oxygen: oxy / n };
-  }
-
-  serialize() {
-    return {
-      params: this.params,
-      nutrient: encodeU16(this.nutrient, 4),
-      detritus: encodeU16(this.detritus, 4),
-      oxygen: encodeU16(this.oxygen, 40000),
-      globalOxygen: this.globalOxygen,
-      globalTempOffset: this.globalTempOffset,
-      sectorTicks: this.sectors.map(s => s.lastTick),
-    };
-  }
-
-  static deserialize(data) {
-    const w = new World(data.params);
-    if (typeof data.nutrient === 'string') {
-      decodeU16(data.nutrient, 4, w.nutrient);
-      decodeU16(data.detritus, 4, w.detritus);
-      decodeU16(data.oxygen, 40000, w.oxygen);
-    } else {
-      // zapisy z wcześniejszej wersji trzymały surowe tablice
-      if (data.nutrient) w.nutrient.set(data.nutrient);
-      if (data.detritus) w.detritus.set(data.detritus);
-      if (data.oxygen) w.oxygen.set(data.oxygen);
-    }
-    w.globalOxygen = data.globalOxygen ?? w.params.oxygen;
-    w.globalTempOffset = data.globalTempOffset ?? 0;
-    if (data.sectorTicks) data.sectorTicks.forEach((t, i) => { if (w.sectors[i]) w.sectors[i].lastTick = t; });
-    return w;
   }
 }

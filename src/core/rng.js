@@ -57,9 +57,6 @@ export class RNG {
 
   // niezależny strumień wywiedziony z bieżącego stanu
   fork() { return new RNG((this.state ^ Math.imul(this.int(0x7fffffff), 2654435761)) >>> 0); }
-
-  serialize() { return this.state; }
-  static deserialize(state) { const r = new RNG(1); r.state = state >>> 0; return r; }
 }
 
 // Globalny, nieokreślony strumień dla efektów wizualnych i mutacji "w locie".
