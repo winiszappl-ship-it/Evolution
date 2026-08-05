@@ -1,4 +1,5 @@
 import { World, TILE, SECTOR_TILES } from '../world/world.js';
+import { FOOD_REMAINS } from '../world/food.js';
 import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
 import { Organism, DETAIL, isConsumer, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
 import { SpeciesRegistry } from '../bio/species.js';
@@ -219,7 +220,7 @@ export class Simulation {
         // w podłożu, dostępny dla wszystkiego, co filtruje.
         const ti = world.tileOf(o.x, o.y);
         const remains = o.body.mass * 3.2 + Math.max(0, o.energy) * 0.55;
-        world.food.add(o.x, o.y, remains * 0.75);
+        world.food.add(o.x, o.y, remains * 0.75, FOOD_REMAINS);
         world.addDetritus(ti, remains * 0.25);
         this.stats.deaths++;
         this.watcher.onDeath(o);

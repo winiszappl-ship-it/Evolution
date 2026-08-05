@@ -1,6 +1,7 @@
 import { develop } from './develop.js';
 import { buildBrain, stepBrain } from './brain.js';
 import { Genome } from './genome.js';
+import { FOOD_PLANT, FOOD_REMAINS } from '../world/food.js';
 import { clamp, TAU } from '../core/util.js';
 
 let ORG_SEQ = 1;
@@ -18,6 +19,9 @@ export const ABSORB_RATE = 0.055;
 // realny zysk. To ta nagroda sprawia, że szukanie pokarmu się opłaca; gdyby
 // tempo ledwo pokrywało utrzymanie, ruch nie miałby czego zwracać.
 export const DIGEST_RATE = 0.5;
+// Ile nadwyżki musi się uzbierać, zanim organizm wydali ją jako okruch.
+// Bez progu świat zasypałby się pyłem po ułamku energii.
+const SHED_PARCEL = 3;
 
 /**
  * Czy ten organizm żył z cudzej pracy? Rozstrzyga to, co faktycznie zjadł;
@@ -26,7 +30,7 @@ export const DIGEST_RATE = 0.5;
 export function isConsumer(o) {
   const g = o.gain;
   const auto = g.photo + g.absorb;
-  const hetero = g.detritus + g.predation;
+  const hetero = g.plant + g.carrion + g.predation;
   if (auto + hetero < 1e-6) {
     const cap = o.body.cap;
     return cap.digest > cap.photo + cap.absorb;
@@ -46,7 +50,8 @@ export function trophicLabel(g, total) {
       ? 'konsument drugiego rzędu'
       : 'konsument pierwszego rzędu';
   }
-  if (g.detritus > total * 0.4) return 'padlinożerca';
+  if (g.plant > total * 0.4) return 'roślinożerca';
+  if (g.carrion > total * 0.4) return 'padlinożerca';
   if (g.photo + g.absorb > total * 0.55) return 'producent';
   return 'wszystkożerca';
 }
@@ -103,9 +108,11 @@ export class Organism {
     // `preyProducer` i `preyConsumer` rozdzielają zdobycz według tego, czym
     // ona sama żyła — stąd bierze się pozycja troficzna, mierzona po fakcie.
     this.gain = {
-      photo: 0, absorb: 0, detritus: 0, predation: 0,
+      photo: 0, absorb: 0, plant: 0, carrion: 0, predation: 0,
       preyProducer: 0, preyConsumer: 0,
     };
+    this._shed = 0;          // nadwyżka czekająca na wydalenie
+    this._foodTake = { plant: 0, carrion: 0 };
     this.lastGainTotal = 0;
     this.contact = 0;
     this.attacked = 0;
@@ -406,9 +413,15 @@ export class Organism {
     // jedyny powód, dla którego ruch może się organizmowi opłacić.
     if (cap.digest > 0.01) {
       const reach = this.radius + 2.5;
-      const got = world.food.consume(this.x, this.y, reach, cap.digest * DIGEST_RATE * dt);
-      const g = got * 0.62 * tempEff;
-      gained += g; this.gain.detritus += g;
+      const take = this._foodTake;
+      take.plant = 0; take.carrion = 0;
+      const got = world.food.consume(this.x, this.y, reach, cap.digest * DIGEST_RATE * dt, take);
+      if (got > 0) {
+        const eff = 0.62 * tempEff;
+        gained += got * eff;
+        this.gain.plant += take.plant * eff;
+        this.gain.carrion += take.carrion * eff;
+      }
     }
 
     // koszty
@@ -430,7 +443,20 @@ export class Organism {
     this.age += dt;
     this.moveCost = 0;
 
-    if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
+    // Zapas ma granicę, ale nadwyżka nie znika w powietrzu — organizm ją
+    // wydala. To jedyne źródło materii roślinnej w tym świecie i zarazem
+    // jedyny sposób, w jaki producent może kogokolwiek wyżywić za życia.
+    if (this.energy > this.maxEnergy) {
+      this._shed += this.energy - this.maxEnergy;
+      this.energy = this.maxEnergy;
+      if (this._shed >= SHED_PARCEL) {
+        const ang = this.heading + Math.PI + (Math.random() - 0.5);
+        const d = this.radius + 1.2;
+        world.food.add(this.x + Math.cos(ang) * d, this.y + Math.sin(ang) * d,
+          this._shed * 0.8, isConsumer(this) ? FOOD_REMAINS : FOOD_PLANT);
+        this._shed = 0;
+      }
+    }
 
     if (this.energy <= 0 || this.integrity <= 0 || this.age > P.lifespan) {
       this.alive = false;
@@ -476,17 +502,17 @@ export class Organism {
 
   diet() {
     const g = this.gain;
-    const t = g.photo + g.absorb + g.detritus + g.predation;
+    const t = g.photo + g.absorb + g.plant + g.carrion + g.predation;
     if (t < 1e-6) return { key: 'none', label: 'brak', frac: {}, trophic: 'nieokreślona' };
     const frac = {
-      photo: g.photo / t, absorb: g.absorb / t,
-      detritus: g.detritus / t, predation: g.predation / t,
+      photo: g.photo / t, absorb: g.absorb / t, plant: g.plant / t,
+      carrion: g.carrion / t, predation: g.predation / t,
     };
     let key = 'photo', best = -1;
     for (const k of Object.keys(frac)) if (frac[k] > best) { best = frac[k]; key = k; }
     const labels = {
-      photo: 'fotosynteza', absorb: 'osmotrofia',
-      detritus: 'rozkład materii', predation: 'materia żywa',
+      photo: 'fotosynteza', absorb: 'osmotrofia', plant: 'materia roślinna',
+      carrion: 'szczątki', predation: 'materia żywa',
     };
     return { key, label: labels[key], frac, mixed: best < 0.6, trophic: trophicLabel(g, t) };
   }

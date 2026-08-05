@@ -164,10 +164,13 @@ export function organismPanel(o, app) {
   const dietRows = el('div', { class: 'section' }, el('h4', { text: 'Skąd bierze energię' }));
   dietRows.appendChild(row('Pozycja troficzna', d.trophic || 'nieokreślona'));
   const labels = {
-    photo: 'światło', absorb: 'materia rozpuszczona',
-    detritus: 'materia stała', predation: 'materia żywa',
+    photo: 'światło', absorb: 'materia rozpuszczona', plant: 'materia roślinna',
+    carrion: 'szczątki', predation: 'materia żywa',
   };
-  const colors = { photo: '#6ee7a0', absorb: '#57d6ff', detritus: '#c8a06a', predation: '#ff6b6b' };
+  const colors = {
+    photo: '#6ee7a0', absorb: '#57d6ff', plant: '#e0483a',
+    carrion: '#b03b30', predation: '#ff6b6b',
+  };
   if (d.key === 'none') {
     dietRows.appendChild(el('div', { class: 'hint', text: 'Jeszcze nic nie pozyskał.' }));
   } else {

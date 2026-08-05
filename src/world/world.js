@@ -2,7 +2,7 @@ import { generateTerrain } from './worldgen.js';
 import { BIOME_DEF, isWater } from './biomes.js';
 import { clamp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
-import { FoodField } from './food.js';
+import { FoodField, FOOD_PLANT } from './food.js';
 
 export const TILE = 12;            // jednostki świata na kafel
 export const SECTOR_TILES = 16;    // kafle na krawędź sektora
@@ -90,7 +90,7 @@ export class World {
       if (rng.next() > b.nutrient * 0.5) continue;
       const x = (i % this.W) * TILE + rng.float(0, TILE);
       const y = ((i / this.W) | 0) * TILE + rng.float(0, TILE);
-      this.food.add(x, y, rng.float(3, 14));
+      this.food.add(x, y, rng.float(3, 14), FOOD_PLANT);
     }
   }
 

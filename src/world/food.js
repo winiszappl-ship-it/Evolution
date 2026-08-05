@@ -10,10 +10,18 @@ import { TILE } from './world.js';
  * do niczego przydać. Okruch ma położenie, więc stężenie zmienia się płynnie
  * z odległością i organizm może je porównać dwoma stronami ciała.
  *
- * Okruchy powstają wyłącznie ze śmierci. Świat nie produkuje ich z niczego —
+ * Okruch jest jednego z dwóch rodzajów, ale nie dlatego, że świat zna rośliny
+ * i zwierzęta. Rodzaj mówi tylko, skąd materia pochodzi: od kogoś, kto żył ze
+ * światła, czy od kogoś, kto żył z cudzej pracy.
+ *
+ * Okruchy powstają wyłącznie z organizmów: z ich śmierci albo z nadwyżki,
+ * której nie zmieściły w swoim zapasie. Świat nie produkuje ich z niczego —
  * jedynym wyjątkiem jest pierwotna materia organiczna obecna na planecie,
  * zanim cokolwiek zaczęło żyć.
  */
+
+export const FOOD_PLANT = 0;     // materia wydalona przez organizm żyjący ze światła
+export const FOOD_REMAINS = 1;   // to, co zostało po ciele
 
 const MAX_FOOD = 5000;
 const SENSE_RANGE = 20;        // zasięg, z jakiego czuć okruch
@@ -25,6 +33,7 @@ export class FoodField {
     this.px = new Float32Array(MAX_FOOD);
     this.py = new Float32Array(MAX_FOOD);
     this.e = new Float32Array(MAX_FOOD);
+    this.kind = new Uint8Array(MAX_FOOD);
     this.used = new Uint8Array(MAX_FOOD);
     this.free = [];
     for (let i = MAX_FOOD - 1; i >= 0; i--) this.free.push(i);
@@ -40,11 +49,12 @@ export class FoodField {
   }
 
   /** Dorzuca okruch. Gdy brakuje miejsca, najbiedniejszy w tym kaflu ustępuje. */
-  add(x, y, energy) {
+  add(x, y, energy, kind = FOOD_REMAINS) {
     if (energy <= 0.05) return -1;
     if (!this.free.length && !this.evict()) return -1;
     const i = this.free.pop();
     this.px[i] = x; this.py[i] = y; this.e[i] = energy;
+    this.kind[i] = kind;
     this.used[i] = 1;
     const k = this.key(x, y);
     let arr = this.grid.get(k);
@@ -131,8 +141,11 @@ export class FoodField {
     return sum;
   }
 
-  /** Zjadanie. Zwraca ile energii faktycznie udało się pobrać. */
-  consume(x, y, r, want) {
+  /**
+   * Zjadanie. Zwraca łączną pobraną energię, a w `out` rozbija ją na rodzaje —
+   * bez tego nie dałoby się później powiedzieć, czym organizm się właściwie żywił.
+   */
+  consume(x, y, r, want, out = null) {
     if (want <= 0 || !this.count) return 0;
     if (!this._buf) this._buf = [];
     const list = this.near(x, y, r, this._buf);
@@ -144,6 +157,9 @@ export class FoodField {
       this.e[i] -= take;
       this.total -= take;
       got += take;
+      if (out) {
+        if (this.kind[i] === FOOD_PLANT) out.plant += take; else out.carrion += take;
+      }
       if (this.e[i] <= 0.05) this.remove(i);
     }
     return got;
@@ -183,7 +199,7 @@ export class FoodField {
         if (!arr) continue;
         for (let n = 0; n < arr.length; n++) {
           const i = arr[n];
-          cb(this.px[i], this.py[i], this.e[i]);
+          cb(this.px[i], this.py[i], this.e[i], this.kind[i]);
         }
       }
     }

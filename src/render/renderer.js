@@ -31,10 +31,13 @@ export class Renderer {
     this.showUI = true;
     this.selected = null;
     this.time = 0;
-    this.foodSprite = new Image();
-    this.foodSpriteReady = false;
-    this.foodSprite.onload = () => { this.foodSpriteReady = true; };
-    this.foodSprite.src = 'assets/pokarm.png';
+    // Dwa obrazki, bo okruch pochodzi albo od kogoś, kto żył ze światła,
+    // albo z ciała. Rodzaj to opis pochodzenia, nie osobny byt w świecie.
+    this.foodSprites = [new Image(), new Image()];
+    this.foodSpriteReady = 0;
+    for (const img of this.foodSprites) img.onload = () => { this.foodSpriteReady++; };
+    this.foodSprites[0].src = 'assets/roslina.png';
+    this.foodSprites[1].src = 'assets/szczatki.png';
     this.buildTerrain();
   }
 
@@ -191,31 +194,36 @@ export class Renderer {
     if (!this._foodBuf) this._foodBuf = [];
     const buf = this._foodBuf;
     buf.length = 0;
-    food.forEachInBounds(b, (x, y, e) => {
-      if (buf.length < 18000) buf.push(x, y, e);
+    food.forEachInBounds(b, (x, y, e, kind) => {
+      if (buf.length < 24000) buf.push(x, y, e, kind);
     });
-    const n = buf.length / 3;
+    const n = buf.length / 4;
     if (!n) return;
 
     // Z bliska okruch wygląda jak to, czym jest; z daleka wystarczy punkt.
-    if (this.foodSpriteReady && z > 1.4 && n <= MAX_FOOD_SPRITES) {
-      for (let i = 0; i < buf.length; i += 3) {
+    if (this.foodSpriteReady === 2 && z > 1.4 && n <= MAX_FOOD_SPRITES) {
+      for (let i = 0; i < buf.length; i += 4) {
         const p = cam.worldToScreen(buf[i], buf[i + 1]);
         const s = clamp((1.1 + Math.sqrt(buf[i + 2]) * 0.55) * z * 0.5, 5, 28);
-        ctx.drawImage(this.foodSprite, p.x - s / 2, p.y - s / 2, s, s);
+        ctx.drawImage(this.foodSprites[buf[i + 3]], p.x - s / 2, p.y - s / 2, s, s);
       }
       return;
     }
 
-    ctx.fillStyle = 'rgba(216,72,58,0.85)';
-    ctx.beginPath();
-    for (let i = 0; i < buf.length; i += 3) {
-      const p = cam.worldToScreen(buf[i], buf[i + 1]);
-      const r = Math.max(0.8, Math.min(3.5, 0.35 + Math.sqrt(buf[i + 2]) * 0.22) * z * 0.45);
-      ctx.moveTo(p.x + r, p.y);
-      ctx.arc(p.x, p.y, r, 0, TAU);
+    for (let kind = 0; kind < 2; kind++) {
+      ctx.fillStyle = kind === 0 ? 'rgba(224,72,58,0.85)' : 'rgba(150,44,36,0.9)';
+      ctx.beginPath();
+      let any = false;
+      for (let i = 0; i < buf.length; i += 4) {
+        if (buf[i + 3] !== kind) continue;
+        any = true;
+        const p = cam.worldToScreen(buf[i], buf[i + 1]);
+        const r = Math.max(0.8, Math.min(3.5, 0.35 + Math.sqrt(buf[i + 2]) * 0.22) * z * 0.45);
+        ctx.moveTo(p.x + r, p.y);
+        ctx.arc(p.x, p.y, r, 0, TAU);
+      }
+      if (any) ctx.fill();
     }
-    ctx.fill();
   }
 
   drawSectorGrid(ctx) {

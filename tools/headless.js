@@ -27,6 +27,13 @@ sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 600, 4);
 console.log(`\nZasiano ${sim.organisms.length} komórkę. Reszta musi z niej powstać.\n`);
 
+const kindCount = (sim, k) => {
+  const f = sim.world.food;
+  let n = 0;
+  for (let i = 0; i < f.used.length; i++) if (f.used[i] && f.kind[i] === k) n++;
+  return n;
+};
+
 const t1 = Date.now();
 let report = 0;
 for (let t = 0; t < ticks; t++) {
@@ -37,12 +44,13 @@ for (let t = 0; t < ticks; t++) {
     const cells = sim.organisms.reduce((s, o) => s + o.body.cellCount, 0) / Math.max(1, sim.organisms.length);
     const neur = sim.organisms.reduce((s, o) => s + o.brain.neurons.length, 0) / Math.max(1, sim.organisms.length);
     const musc = sim.organisms.reduce((s, o) => s + o.brain.effectors.length, 0) / Math.max(1, sim.organisms.length);
-    const dig = sim.organisms.reduce((s, o) => s + o.gain.detritus, 0);
+    const dig = sim.organisms.reduce((s, o) => s + o.gain.plant + o.gain.carrion, 0);
     console.log(`rok ${(t / TICKS_PER_YEAR).toFixed(1)}  org=${String(sim.organisms.length).padStart(4)}  `
       + `gat=${String(sim.species.aliveCount).padStart(3)}  geny=${genes.toFixed(1)}  `
       + `kom=${cells.toFixed(2)}  neur=${neur.toFixed(2)}  mies=${musc.toFixed(2)}  `
       + `pokol=${String(sim.stats.maxGeneration).padStart(3)}  `
-      + `okruchy=${String(sim.world.food.count).padStart(4)}  zjedzone=${dig.toFixed(0)}`);
+      + `okruchy=${String(sim.world.food.count).padStart(4)}  zjedzone=${dig.toFixed(0)}`
+      + `  rosl=${String(kindCount(sim, 0)).padStart(4)}  szcz=${String(kindCount(sim, 1)).padStart(4)}`);
   }
 }
 const elapsed = Date.now() - t1;

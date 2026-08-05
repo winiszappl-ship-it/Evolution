@@ -3,6 +3,7 @@ import { Simulation } from '../src/sim/simulation.js';
 import { defaultDesign } from '../src/bio/seed.js';
 import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 import { TICKS_PER_YEAR } from '../src/world/climate.js';
+import { FOOD_PLANT, FOOD_REMAINS } from '../src/world/food.js';
 
 const years = parseFloat(process.argv[2] || '10');
 let failures = 0;
@@ -61,7 +62,7 @@ const eaters = sim.organisms.filter(o => o.body.cap.digest > 0.05 && o.age > 200
 const motile = eaters.filter(o => o.brain.effectors.length > 0);
 const still = eaters.filter(o => o.brain.effectors.length === 0);
 const perAge = (arr) => arr.length
-  ? arr.reduce((a, o) => a + o.gain.detritus / o.age, 0) / arr.length : 0;
+  ? arr.reduce((a, o) => a + (o.gain.plant + o.gain.carrion) / o.age, 0) / arr.length : 0;
 
 console.log(`zdolnych do trawienia: ${eaters.length} `
   + `(z mięśniami ${motile.length}, bez ${still.length})`);
@@ -74,8 +75,23 @@ if (motile.length >= 3 && still.length >= 3) {
   console.log('  (za mało organizmów obu rodzajów, by porównać — ewolucja jeszcze tam nie doszła)');
 }
 
-const totalEaten = sim.organisms.reduce((a, o) => a + o.gain.detritus, 0);
+const totalEaten = sim.organisms.reduce((a, o) => a + o.gain.plant + o.gain.carrion, 0);
 check(totalEaten > 0, 'pokarm stały jest w ogóle zjadany', `${totalEaten.toFixed(0)} energii`);
+
+// --- dwa rodzaje pokarmu, oba pochodzące od organizmów ---
+const f = sim.world.food;
+let plant = 0, remains = 0;
+for (let i = 0; i < f.used.length; i++) {
+  if (!f.used[i]) continue;
+  if (f.kind[i] === FOOD_PLANT) plant++; else remains++;
+}
+console.log(`okruchy w świecie: ${plant} roślinnych, ${remains} ze szczątków`);
+check(plant > 0 && remains > 0,
+  'w świecie występują oba rodzaje pokarmu naraz');
+
+const shedTotal = sim.organisms.reduce((a, o) => a + o.gain.plant, 0);
+check(shedTotal > 0, 'materia roślinna trafia do konsumentów',
+  `${shedTotal.toFixed(0)} energii`);
 
 console.log(failures === 0 ? '\nPokarm działa jako powód do ruchu.' : `\n${failures} sprawdzeń nieudanych.`);
 process.exit(failures ? 1 : 0);

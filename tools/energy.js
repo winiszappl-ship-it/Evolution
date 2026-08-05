@@ -28,7 +28,7 @@ for (let t = 1; t <= 200; t++) {
   if (t % 10 === 0 || !o.alive) {
     console.log(`t=${String(t).padStart(3)} e=${o.energy.toFixed(2)} `
       + `Δ=${(o.energy - before).toFixed(4)} zysk=${o.lastGainTotal.toFixed(4)} `
-      + `foto=${o.gain.photo.toFixed(2)} abs=${o.gain.absorb.toFixed(2)} det=${o.gain.detritus.toFixed(2)} `
+      + `foto=${o.gain.photo.toFixed(2)} abs=${o.gain.absorb.toFixed(2)} rosl=${o.gain.plant.toFixed(2)} szcz=${o.gain.carrion.toFixed(2)} `
       + `int=${o.integrity.toFixed(2)} żywy=${o.alive} org=${sim.organisms.length}`);
   }
   if (!o.alive) { console.log('przyczyna:', o.deathCause); break; }

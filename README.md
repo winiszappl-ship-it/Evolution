@@ -132,9 +132,10 @@ zjadaniu zapisuje też, czym żywiła się ofiara. Stąd biorą się etykiety:
 | etykieta | co znaczy |
 |---|---|
 | producent | większość energii ze światła lub z materii rozpuszczonej |
-| padlinożerca | większość z martwej materii stałej |
-| konsument pierwszego rzędu | zjada głównie producentów — odpowiednik roślinożercy |
-| konsument drugiego rzędu | zjada głównie konsumentów — odpowiednik mięsożercy |
+| roślinożerca | żywi się materią wydaloną przez producentów |
+| padlinożerca | żywi się szczątkami po martwych ciałach |
+| konsument pierwszego rzędu | zjada żywych producentów |
+| konsument drugiego rzędu | zjada żywych konsumentów |
 | wszystkożerca | żadne źródło nie przeważa |
 
 Różnica wobec zwykłej gry jest zasadnicza. Etykieta nie ogranicza organizmu:
@@ -194,10 +195,30 @@ Rozpuszczona materia organiczna została w polu kafla jako osobny, uboższy
 zasób. Jest wszędzie po trochu i nie trzeba po nią iść — to nisza dla tych,
 którzy filtrują, zamiast szukać.
 
-Okruchy powstają wyłącznie ze śmierci. Jedynym wyjątkiem jest pierwotna materia
-organiczna leżąca na planecie, zanim cokolwiek zaczęło żyć — jednorazowe
-wyposażenie świata, nie źródło produkujące bez końca. Nikt niezjedzony okruch
-rozkłada się na minerały, więc obieg materii domyka się nawet bez padlinożerców.
+### Dwa rodzaje okruchów, obydwa z organizmów
+
+Okruch jest jednego z dwóch rodzajów, ale nie dlatego, że świat zna rośliny
+i zwierzęta. Rodzaj mówi wyłącznie, skąd materia pochodzi.
+
+**Szczątki** zostają po śmierci — tam, gdzie ciało padło.
+
+**Materia roślinna** powstaje inaczej i to jest ciekawsza część. Zapas energii
+ma granicę, a producent w dobrym miejscu wytwarza więcej, niż zdoła zmieścić.
+Wcześniej ta nadwyżka po prostu znikała: jedna linijka ucinała energię do
+maksimum i reszta przepadała. Była to cicha dziura w zachowaniu energii.
+
+Teraz nadwyżka jest wydalana jako okruch. Nic nie kosztuje organizmu — energia
+i tak była nie do utrzymania — ale ląduje na ziemi jako pokarm. Stąd bierze się
+odnawialne źródło jedzenia niezależne od śmierci, i stąd bierze się to, że
+producent może wyżywić kogoś **za życia**, nie dopiero swoim trupem.
+
+Rodzaj wydaliny idzie za tym, czym organizm żył: kto żył ze światła, zostawia
+materię roślinną; kto żył z cudzej pracy — szczątki.
+
+Nikt niezjedzony okruch rozkłada się na minerały, więc obieg materii domyka się
+nawet bez padlinożerców. Jedynym pokarmem, który nie pochodzi z organizmu, jest
+pierwotna materia organiczna leżąca na planecie, zanim cokolwiek zaczęło żyć —
+jednorazowe wyposażenie świata, nie źródło produkujące bez końca.
 
 ### Ciało kosztuje energię, którą trzeba mieć
 
@@ -282,7 +303,7 @@ organizm, który musi sobie w niej poradzić sam.
 
 ```
 index.html, styles.css     interfejs
-assets/                    grafika (okruch pokarmu)
+assets/                    grafika (dwa rodzaje okruchów pokarmu)
 src/core/                  generator liczb losowych, szum, magistrala zdarzeń
 src/world/                 teren, biomy, klimat, chemia kafli, okruchy pokarmu
 src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,
