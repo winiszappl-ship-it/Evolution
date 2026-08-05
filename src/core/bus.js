@@ -1,0 +1,26 @@
+// Minimalna magistrala zdarzeń — świat zgłasza fakty, reszta systemu nasłuchuje.
+class Bus {
+  constructor() { this.map = new Map(); }
+
+  on(type, fn) {
+    if (!this.map.has(type)) this.map.set(type, new Set());
+    this.map.get(type).add(fn);
+    return () => this.off(type, fn);
+  }
+
+  off(type, fn) {
+    const s = this.map.get(type);
+    if (s) s.delete(fn);
+  }
+
+  emit(type, payload) {
+    const s = this.map.get(type);
+    if (s) for (const fn of s) fn(payload);
+    const all = this.map.get('*');
+    if (all) for (const fn of all) fn({ type, payload });
+  }
+
+  clear() { this.map.clear(); }
+}
+
+export const bus = new Bus();

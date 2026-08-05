@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>EVOLUTION — laboratorium ewolucji</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='%2354d98a'/><circle cx='16' cy='16' r='4' fill='%230b1220'/></svg>">
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" class="hud">
+  <div class="hud-top" id="hudTop">
+    <span class="stat" title="Czas świata"><b id="statYear">0</b><i>rok</i></span>
+    <span class="stat" title="Żywe organizmy"><b id="statOrganisms">0</b><i>organizmy</i></span>
+    <span class="stat" title="Gatunki obecnie żyjące"><b id="statSpecies">0</b><i>gatunki</i></span>
+    <span class="stat" title="Temperatura w środku widoku"><b id="statTemp">—</b><i>temperatura</i></span>
+    <span class="stat"><b id="statSeason">—</b><i>pora roku</i></span>
+    <span class="stat"><b id="statSpeed">1×</b><i>tempo</i></span>
+    <span class="stat dim" title="Organizmy liczone z pełną fizyką"><b id="statDetail">0</b><i>pełna fizyka</i></span>
+  </div>
+
+  <div class="panel-left" id="panelLeft">
+    <button data-act="playpause" class="big" title="Spacja">▶</button>
+    <div class="speeds" id="speedButtons"></div>
+    <button data-act="addcell" title="Zasiej nową pierwszą komórkę">Dodaj komórkę</button>
+    <button data-act="lab">Laboratorium</button>
+    <button data-act="bank">Bank DNA</button>
+    <button data-act="encyclopedia">Encyklopedia</button>
+    <button data-act="chronicle">Kronika</button>
+    <button data-act="menu" title="Esc">Menu</button>
+  </div>
+
+  <aside class="panel-right hidden" id="panelRight"></aside>
+
+  <div class="overlay-picker" id="overlayPicker"></div>
+  <div class="toasts" id="toasts"></div>
+</div>
+
+<div class="modal hidden" id="modal">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<div id="hint" class="hint">Tab — ukryj interfejs · kółko myszy — przybliżenie · klik — zaznacz organizm</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
