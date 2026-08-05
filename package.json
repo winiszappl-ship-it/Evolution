@@ -11,6 +11,7 @@
     "energy": "node tools/energy.js",
     "profile": "node tools/profile.js 6",
     "uitest": "node tools/uitest.mjs",
-    "check": "node tools/syntax.js"
+    "check": "node tools/syntax.js",
+    "pages": "node tools/pagestest.mjs"
   }
 }

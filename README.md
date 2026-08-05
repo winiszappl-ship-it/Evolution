@@ -22,6 +22,20 @@ python3 -m http.server 8000
 
 Następnie otwórz `http://localhost:8000`.
 
+### GitHub Pages
+
+Projekt nadaje się na GitHub Pages bez żadnych zmian: nie ma kroku budowania,
+wszystkie ścieżki są względne, a stan zapisuje się w pamięci przeglądarki.
+W ustawieniach repozytorium wystarczy wybrać *Pages → Deploy from a branch*,
+wskazać gałąź i katalog `/ (root)`.
+
+Plik `.nojekyll` wyłącza przetwarzanie przez Jekyll — statyczne pliki mają
+trafiać do przeglądarki takie, jakie są.
+
+Uwaga: świat zapisuje się w `localStorage` przeglądarki, osobno dla każdej
+domeny. Zapisy z `localhost` nie przeniosą się na adres `github.io` — genomy
+da się jednak przenieść ręcznie przez eksport i import w Banku DNA.
+
 ## Sterowanie
 
 | Klawisz | Działanie |
@@ -195,6 +209,7 @@ node tools/seeds.js 12 8                # czy życie utrzymuje się w 8 światac
 node tools/energy.js                    # bilans energetyczny jednej komórki
 node tools/profile.js 6                 # gdzie schodzi czas w takcie
 node tools/uitest.mjs                   # test interfejsu w przeglądarce
+node tools/pagestest.mjs                # czy działa serwowany z podkatalogu
 ```
 
 Test interfejsu wymaga Playwrighta — uruchamia prawdziwą przeglądarkę, przechodzi
