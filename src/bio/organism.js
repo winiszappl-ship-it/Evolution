@@ -1,4 +1,5 @@
 import { develop } from './develop.js';
+import { TRAIT_UPKEEP } from './genome.js';
 import { buildBrain, stepBrain } from './brain.js';
 import { Genome } from './genome.js';
 import { FOOD_PLANT, FOOD_REMAINS } from '../world/food.js';
@@ -84,6 +85,21 @@ export class Organism {
     this.energy = energy ?? this.body.buildCost * 0.9;
     this.age = 0;
     this.alive = true;
+
+    // Uszkodzenia dotykają konkretnych komórek, nie organizmu jako całości.
+    // Dzięki temu w starciu liczy się budowa ciała: gdzie jest pancerz, ile
+    // jest komórek zapasowych i którą stroną organizm został dosięgnięty.
+    const nc = this.body.cellCount;
+    this.cellHp = new Float32Array(nc).fill(1);
+    this.cellTough = new Float32Array(nc);
+    for (let i = 0; i < nc; i++) {
+      const c = this.body.cells[i];
+      // Jedynka to tkanka goła: taka, jaka była, zanim uszkodzenia stały się
+      // lokalne. Pancerz i sztywność podnoszą wytrzymałość ponad ten poziom,
+      // ale nie wolno, żeby brak pancerza oznaczał podwójne obrażenia.
+      this.cellTough[i] = 1 + c.t[8] * 1.8 + c.t[4] * 0.7;
+    }
+    this.cellsAlive = nc;
     this.integrity = 1;
     this.detail = DETAIL.POINT;
     this.speciesId = 0;
@@ -128,6 +144,97 @@ export class Organism {
     this.particles = null;
     this.tileIndex = world ? world.tileOf(x, y) : 0;
     this.brainTime = Math.random() * 100;
+  }
+
+  /** Położenie komórki w świecie — potrzebne, by wiedzieć, co zostało trafione. */
+  cellWorldPos(i, out) {
+    const p = this.particles;
+    if (p) { out.x = p.px[i]; out.y = p.py[i]; return out; }
+    const c = this.body.cells[i];
+    const cs = Math.cos(this.heading), sn = Math.sin(this.heading);
+    out.x = this.x + c.x * cs - c.y * sn;
+    out.y = this.y + c.x * sn + c.y * cs;
+    return out;
+  }
+
+  /** Uszkodzenie pojedynczej komórki. Zwraca, ile obrażeń faktycznie weszło. */
+  hurtCell(i, amount) {
+    const dealt = this._hurt(i, amount);
+    if (dealt > 0) this.refreshIntegrity();
+    return dealt;
+  }
+
+  /** Samo uszkodzenie, bez przeliczania stanu całego ciała. */
+  _hurt(i, amount) {
+    if (this.cellHp[i] <= 0) return 0;
+    const dealt = amount / this.cellTough[i];
+    this.cellHp[i] -= dealt;
+    if (this.cellHp[i] <= 0) {
+      this.cellHp[i] = 0;
+      this.cellsAlive--;
+      // Martwa komórka przestaje pracować i przestaje kosztować.
+      this._capDirty = true;
+      if (this.cellsAlive <= 0) { this.alive = false; this.deathCause = 'rozerwany'; }
+    }
+    return dealt;
+  }
+
+  /** Cios w konkretne miejsce trafia komórkę, która tam jest. */
+  hurtAt(wx, wy, amount) {
+    if (!this._posBuf) this._posBuf = { x: 0, y: 0 };
+    let best = -1, bestD = Infinity;
+    for (let i = 0; i < this.body.cellCount; i++) {
+      if (this.cellHp[i] <= 0) continue;
+      const p = this.cellWorldPos(i, this._posBuf);
+      const d = (p.x - wx) ** 2 + (p.y - wy) ** 2;
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    if (best < 0) return 0;
+    this._lastHit = best;
+    return this.hurtCell(best, amount);
+  }
+
+
+
+  /** Szkoda rozłożona na całe ciało — choroba, poparzenie, uderzenie. */
+  hurtAll(amount) {
+    let any = false;
+    for (let i = 0; i < this.body.cellCount; i++) {
+      if (this.cellHp[i] > 0) { this._hurt(i, amount); any = true; }
+    }
+    if (any) this.refreshIntegrity();
+  }
+
+  refreshIntegrity() {
+    let sum = 0;
+    for (let i = 0; i < this.cellHp.length; i++) sum += this.cellHp[i];
+    this.integrity = sum / Math.max(1, this.cellHp.length);
+  }
+
+  /**
+   * Po utracie komórek ciało pracuje słabiej i mniej kosztuje. Przeliczamy to
+   * dopiero wtedy, gdy któraś komórka faktycznie zginie.
+   */
+  recomputeCap() {
+    this._capDirty = false;
+    const cap = this.body.cap;
+    for (const k of Object.keys(cap)) cap[k] = 0;
+    const keys = Object.keys(cap);
+    let upkeep = 0, area = 0;
+    for (let i = 0; i < this.body.cellCount; i++) {
+      if (this.cellHp[i] <= 0) continue;
+      const c = this.body.cells[i];
+      const a = Math.PI * c.r * c.r;
+      area += a;
+      let u = 0.011;
+      for (let t = 0; t < keys.length; t++) {
+        cap[keys[t]] += c.t[t] * a;
+        u += c.t[t] * TRAIT_UPKEEP[t];
+      }
+      upkeep += u * a;
+    }
+    this.body.upkeep = upkeep * this.genome.params.metabolism
+      + this.genome.params.membrane * area * 0.004;
   }
 
   get maxEnergy() { return this.body.storage + this.body.buildCost * 0.6; }
@@ -436,7 +543,8 @@ export class Organism {
     const stress = Math.max(0, Math.abs(temp - optT) - 26 - shield * 8) * 0.0016
       + world.burn[ti] * 0.05
       + Math.max(0, 0.02 - oxy) * 0.6;
-    if (stress > 0) this.integrity -= stress * dt;
+    if (stress > 0) this.hurtAll(stress * dt);
+    if (this._capDirty) this.recomputeCap();
 
     this.energy += gained - cost;
     this.lastGainTotal = gained;

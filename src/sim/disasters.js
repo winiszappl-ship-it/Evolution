@@ -149,8 +149,8 @@ export class Disasters {
     for (const o of sim.organisms) {
       const d = Math.hypot(o.x / TILE - x, o.y / TILE - y);
       if (d < r * 1.6) {
-        o.integrity -= (1 - d / (r * 1.6)) * 2.2;
-        if (o.integrity <= 0) { o.alive = false; o.deathCause = 'uderzenie'; killed++; }
+        o.hurtAll((1 - d / (r * 1.6)) * 2.2);
+        if (o.integrity <= 0 || !o.alive) { o.alive = false; o.deathCause = 'uderzenie'; killed++; }
       }
     }
     for (let dy = -r; dy <= r; dy++) {
@@ -185,9 +185,9 @@ export class Disasters {
       if (o.speciesId !== target.id || !o.alive) continue;
       const resist = 0.2 + o.genome.params.membrane * 0.5 + o.body.cap.armor * 0.01;
       if (sim.rng.chance(virulence * clamp(1 - resist, 0.05, 1))) {
-        o.integrity -= sim.rng.float(0.3, 1.2);
+        o.hurtAll(sim.rng.float(0.3, 1.2));
         o.energy *= 0.6;
-        if (o.integrity <= 0) { o.alive = false; o.deathCause = 'choroba'; }
+        if (o.integrity <= 0 || !o.alive) { o.alive = false; o.deathCause = 'choroba'; }
         hit++;
       }
     }

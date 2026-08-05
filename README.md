@@ -144,6 +144,29 @@ mutacja przestawi jego komórki, a jego potomek nie dziedziczy roli — dziedzic
 DNA. Etykieta może się też zmienić w ciągu jednego życia, bo opisuje to, co
 organizm faktycznie zjadł, a nie to, czym miał być.
 
+### Starcie: rana pada tam, gdzie cios
+
+Walka nie jest osobnym systemem i nie ma w niej ani ataku jako zamiaru, ani
+obrony jako decyzji. Jest komórka zdolna do trawienia, która dotknęła cudzej
+tkanki — ta sama, która trawi okruch leżący na ziemi.
+
+Nowe jest to, że **uszkodzenia są lokalne**. Ciało nie ma jednego paska
+zdrowia: każda komórka ma własną wytrzymałość, a ugryzienie trafia tę, która
+akurat była w miejscu styku. Z tego wynika reszta:
+
+- opancerzona komórka wytrzymuje więcej, ale chroni tylko to miejsce, w którym
+  jest — pancerz z jednej strony nie pomoże, gdy cios przyjdzie z drugiej
+- twarda tkanka **kaleczy tego, kto ją gryzie**; bez tego pancerz jedynie
+  spowalniałby jedzenie i nigdy nie powstałby wyścig zbrojeń
+- ciało przeżywa utratę części komórek, ale martwa komórka przestaje pracować:
+  organizm traci tyle fotosyntezy, magazynu czy siły, ile zginęło tkanki
+- kto się wgryzł, trzyma. Bez tego odepchnięcie rozdzielałoby ciała po jednym
+  musnięciu i żadne starcie nie mogłoby się skończyć śmiercią
+- większego od siebie nie da się objąć, więc rozmiar sam w sobie jest obroną
+
+Ten sam mechanizm obsługuje polowanie, padlinożerstwo i pasożytnictwo. Różnica
+między nimi jest opisem tego, co ofiara robiła wcześniej, a nie osobną regułą.
+
 ### Ruch wynika z sił, nie z animacji
 
 Ciało jest układem punktów materialnych połączonych sprężynami. Wiązanie, przy
@@ -326,6 +349,7 @@ node tools/uitest.mjs                   # test interfejsu w przeglądarce
 node tools/pagestest.mjs                # czy działa serwowany z podkatalogu
 node tools/biogeneza.js 5               # czy nic nie powstaje z niczego
 node tools/pokarm.js 12                 # czy pokarm daje powód do ruchu
+node tools/walka.js 8                   # czy starcie działa i potrafi zabić
 ```
 
 Test interfejsu wymaga Playwrighta — uruchamia prawdziwą przeglądarkę, przechodzi

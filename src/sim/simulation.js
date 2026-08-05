@@ -16,6 +16,9 @@ export const MAX_POINT_DETAIL = 850;
 const POOL_INTERVAL = 16;
 const HASH_CELL = TILE;
 const MAX_NEIGHBORS = 24;
+// Jak głęboka jest rana w stosunku do pobranej energii. Decyduje o tym, czy
+// starcie w ogóle może się skończyć czyjąś śmiercią.
+const BITE_WOUND = 0.3;
 
 /**
  * Symulacja. Nie zna pojęcia gatunku roślinnego ani zwierzęcego, nie wybiera
@@ -460,17 +463,24 @@ export class Simulation {
         o._cont += rel; p._cont += rel;
         sec.activity += 0.02;
 
-        // odepchnięcie — dwa ciała nie zajmują tego samego miejsca
         const nx = d > 1e-5 ? dx / d : 1, ny = d > 1e-5 ? dy / d : 0;
-        const push = overlap * 0.06;
+        // Punkt styku — tam trafia ugryzienie i tam pada rana.
+        const cx = o.x + nx * (o.radius - overlap * 0.5);
+        const cy = o.y + ny * (o.radius - overlap * 0.5);
+
+        const gO = this.feed(o, p, rel, dt, cx, cy);
+        const gP = this.feed(p, o, rel, dt, cx, cy);
+        if (gO > 0 || gP > 0) this.watcher.noteContact(o, p, gO, gP);
+
+        // Odepchnięcie: dwa ciała nie zajmują tego samego miejsca. Ale ten,
+        // kto się wgryzł, trzyma — bez tego każde starcie kończyłoby się na
+        // jednym musnięciu i nikt nikogo nigdy by nie zabił.
+        const grip = (gO > 0 || gP > 0) ? 0.22 : 1;
+        const push = overlap * 0.06 * grip;
         const mo = o.mass, mp = p.mass;
         const tot = mo + mp;
         o.x -= nx * push * (mp / tot); o.y -= ny * push * (mp / tot);
         p.x += nx * push * (mo / tot); p.y += ny * push * (mo / tot);
-
-        const gO = this.feed(o, p, rel, dt);
-        const gP = this.feed(p, o, rel, dt);
-        if (gO > 0 || gP > 0) this.watcher.noteContact(o, p, gO, gP);
       }
     }
 
@@ -482,31 +492,48 @@ export class Simulation {
     }
   }
 
-  /** Przepływ energii przy kontakcie. Zwraca ile `a` zyskał kosztem `b`. */
-  feed(a, b, overlap, dt) {
+  /**
+   * Starcie przy kontakcie. Nie ma tu ataku jako zamiaru ani obrony jako
+   * decyzji — jest komórka zdolna do trawienia, która dotknęła cudzej tkanki.
+   * Rana pada w miejscu, w które trafiła, a tkanka twarda rani z powrotem.
+   */
+  feed(a, b, overlap, dt, cx, cy) {
     const digest = a.body.cap.digest;
-    if (digest < 0.05 || !b.alive) return 0;
-    // Obrona to pancerz, błona i sztywność tkanki — a także sama wielkość:
-    // ciała większego od napastnika po prostu nie da się objąć.
+    if (digest < 0.05 || !b.alive || !a.alive) return 0;
+
+    // Obrona to pancerz, błona i wielkość: ciała większego od napastnika
+    // po prostu nie da się objąć.
     const gape = 1 + Math.max(0, b.radius - a.radius) * 0.9;
-    const defense = (1 + b.body.cap.armor * 0.05 + b.genome.params.membrane * 1.4
-      + b.body.cap.rigid * 0.02) * gape;
-    const power = digest * overlap * 0.09 * dt / defense;
-    const take = Math.min(b.energy * 0.4, power * 12);
-    if (take <= 0) return 0;
-    b.energy -= take;
-    b.integrity -= take * 0.0026 / Math.max(0.4, b.mass);
-    const got = take * 0.62;                 // straty przy przekazywaniu energii
-    a.energy = Math.min(a.maxEnergy, a.energy + got);
-    a.gain.predation += got;
-    // Zdobycz zapamiętuje, czym sama żyła — inaczej nie dałoby się odróżnić
-    // zjadania producenta od zjadania kogoś, kto zjadł producenta.
-    if (isConsumer(b)) a.gain.preyConsumer += got; else a.gain.preyProducer += got;
-    a._sector.activity += 0.05;
-    if (b.integrity <= 0 || b.energy <= 0) {
-      b.alive = false;
-      b.deathCause = 'zjedzony';
+    const defense = (1 + b.body.cap.armor * 0.05 + b.genome.params.membrane * 1.4) * gape;
+    const bite = digest * overlap * 0.09 * dt / defense;
+    if (bite <= 0) return 0;
+
+    // Ugryzienie rozrywa konkretną komórkę, nie „organizm".
+    const hit = b.hurtAt(cx, cy, bite * BITE_WOUND);
+
+    const take = Math.min(b.energy * 0.4, bite * 12);
+    let got = 0;
+    if (take > 0) {
+      b.energy -= take;
+      got = take * 0.62;                 // straty przy przekazywaniu energii
+      a.energy = Math.min(a.maxEnergy, a.energy + got);
+      a.gain.predation += got;
+      // Zdobycz zapamiętuje, czym sama żyła — inaczej nie dałoby się odróżnić
+      // zjadania producenta od zjadania kogoś, kto zjadł producenta.
+      if (isConsumer(b)) a.gain.preyConsumer += got; else a.gain.preyProducer += got;
     }
+
+    // Tkanka twarda i opancerzona kaleczy tego, kto ją gryzie. Bez tego pancerz
+    // tylko spowalniałby jedzenie i nigdy nie powstałby wyścig zbrojeń.
+    if (hit > 0 && b._lastHit >= 0) {
+      const cell = b.body.cells[b._lastHit];
+      const spite = hit * (cell.t[8] * 0.55 + cell.t[4] * 0.3);
+      if (spite > 1e-4) a.hurtAt(cx, cy, spite);
+    }
+
+    a._sector.activity += 0.05;
+    if (!b.alive && !b.deathCause) b.deathCause = 'zjedzony';
+    else if (b.energy <= 0) { b.alive = false; b.deathCause = 'zjedzony'; }
     return got;
   }
 
