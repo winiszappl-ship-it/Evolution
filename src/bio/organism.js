@@ -20,6 +20,38 @@ export const ABSORB_RATE = 0.055;
 export const DIGEST_RATE = 0.5;
 
 /**
+ * Czy ten organizm żył z cudzej pracy? Rozstrzyga to, co faktycznie zjadł;
+ * dopóki nic nie zjadł — to, czym w ogóle potrafi jeść.
+ */
+export function isConsumer(o) {
+  const g = o.gain;
+  const auto = g.photo + g.absorb;
+  const hetero = g.detritus + g.predation;
+  if (auto + hetero < 1e-6) {
+    const cap = o.body.cap;
+    return cap.digest > cap.photo + cap.absorb;
+  }
+  return hetero > auto;
+}
+
+/**
+ * Pozycja troficzna. To nie jest kategoria, do której organizm należy — to
+ * zdanie o tym, skąd wzięła się jego energia. Ten sam osobnik może zmienić
+ * etykietę w ciągu życia, bo etykieta idzie za pomiarem, nie odwrotnie.
+ */
+export function trophicLabel(g, total) {
+  if (total < 1e-6) return 'nieokreślona';
+  if (g.predation > total * 0.4) {
+    return g.preyConsumer > g.preyProducer
+      ? 'konsument drugiego rzędu'
+      : 'konsument pierwszego rzędu';
+  }
+  if (g.detritus > total * 0.4) return 'padlinożerca';
+  if (g.photo + g.absorb > total * 0.55) return 'producent';
+  return 'wszystkożerca';
+}
+
+/**
  * Organizm. Silnik nie wie, czy to "roślina", "drapieżnik" czy "pasożyt" —
  * zna tylko komórki, ich zdolności fizyczne i bilans energii. Rola ekologiczna
  * jest opisem tego, co organizm faktycznie robi, a nie jego definicją.
@@ -68,7 +100,12 @@ export class Organism {
     this._mx = x; this._my = y; this._mt = 0;
 
     // rejestr tego, jak organizm faktycznie zdobywa energię
-    this.gain = { photo: 0, absorb: 0, detritus: 0, predation: 0 };
+    // `preyProducer` i `preyConsumer` rozdzielają zdobycz według tego, czym
+    // ona sama żyła — stąd bierze się pozycja troficzna, mierzona po fakcie.
+    this.gain = {
+      photo: 0, absorb: 0, detritus: 0, predation: 0,
+      preyProducer: 0, preyConsumer: 0,
+    };
     this.lastGainTotal = 0;
     this.contact = 0;
     this.attacked = 0;
@@ -440,7 +477,7 @@ export class Organism {
   diet() {
     const g = this.gain;
     const t = g.photo + g.absorb + g.detritus + g.predation;
-    if (t < 1e-6) return { key: 'none', label: 'brak', frac: {} };
+    if (t < 1e-6) return { key: 'none', label: 'brak', frac: {}, trophic: 'nieokreślona' };
     const frac = {
       photo: g.photo / t, absorb: g.absorb / t,
       detritus: g.detritus / t, predation: g.predation / t,
@@ -451,6 +488,6 @@ export class Organism {
       photo: 'fotosynteza', absorb: 'osmotrofia',
       detritus: 'rozkład materii', predation: 'materia żywa',
     };
-    return { key, label: labels[key], frac, mixed: best < 0.6 };
+    return { key, label: labels[key], frac, mixed: best < 0.6, trophic: trophicLabel(g, t) };
   }
 }

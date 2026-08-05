@@ -29,6 +29,7 @@ export class Species {
     this.hue = genome.params.hue;
     this.avg = { cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, generation: 0 };
     this.dietFrac = { photo: 0, absorb: 0, detritus: 0, predation: 0 };
+    this.trophic = 'nieokreślona';   // opis zmierzony, nie kategoria z góry
     this.notes = [];
     this.depth = parent ? parent.depth + 1 : 0;
   }
@@ -107,7 +108,7 @@ export class SpeciesRegistry {
       if (!s._acc) {
         s._acc = {
           cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, gen: 0, cx: 0, cy: 0,
-          d: { photo: 0, absorb: 0, detritus: 0, predation: 0 }, dn: 0,
+          d: { photo: 0, absorb: 0, detritus: 0, predation: 0 }, dn: 0, troph: new Map(),
           fp: new Float32Array(s.fingerprint.length), fpN: 0,
         };
       }
@@ -128,6 +129,7 @@ export class SpeciesRegistry {
       if (dd.key !== 'none') {
         a.dn++;
         for (const k of Object.keys(a.d)) a.d[k] += dd.frac[k] || 0;
+        a.troph.set(dd.trophic, (a.troph.get(dd.trophic) || 0) + 1);
       }
       s.biomes.set(o._biome ?? 0, (s.biomes.get(o._biome ?? 0) || 0) + 1);
     }
@@ -154,7 +156,11 @@ export class SpeciesRegistry {
             s.fingerprint[k] = s.fingerprint[k] * 0.88 + (a.fp[k] / a.fpN) * 0.12;
           }
         }
-        if (a.dn > 0) for (const k of Object.keys(s.dietFrac)) s.dietFrac[k] = a.d[k] / a.dn;
+        if (a.dn > 0) {
+          for (const k of Object.keys(s.dietFrac)) s.dietFrac[k] = a.d[k] / a.dn;
+          let best = 0;
+          for (const [label, cnt] of a.troph) if (cnt > best) { best = cnt; s.trophic = label; }
+        }
       } else if (s.extinct === null && s.everBorn > 0) {
         s.extinct = tick;
         newlyExtinct.push(s);

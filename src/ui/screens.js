@@ -26,8 +26,8 @@ export class Screens {
         el('button', { onclick: () => this.dnaBank() }, 'Bank DNA', el('small', { text: 'Zachowane genomy i kolekcje' })),
         el('button', { onclick: () => this.encyclopedia() }, 'Encyklopedia Gatunków', el('small', { text: 'Wszystko, co kiedykolwiek żyło w tym świecie' })),
         el('button', { onclick: () => this.lab() }, 'Laboratorium', el('small', { text: 'Eksperymenty na żywym świecie' })),
-        el('button', { onclick: () => this.settings() }, 'Ustawienia', el('small', { text: 'Interfejs, wydajność, zapis' })),
-        el('button', { onclick: () => this.exit() }, 'Wyjście', el('small', { text: 'Zapisz i zakończ' }))));
+        el('button', { onclick: () => this.settings() }, 'Ustawienia', el('small', { text: 'Interfejs i wydajność' })),
+        el('button', { onclick: () => this.exit() }, 'Wyjście', el('small', { text: 'Zakończ ten świat na zawsze' }))));
     openModal(box, { dismissable: has });
   }
 
@@ -161,7 +161,8 @@ export class Screens {
         el('tr', {}, el('th', { text: 'Gatunek' }), el('th', { text: 'Stan' }),
           el('th', { class: 'num', text: 'Osobniki' }), el('th', { class: 'num', text: 'Szczyt' }),
           el('th', { class: 'num', text: 'Powstał' }), el('th', { text: 'Odżywianie' }),
-          el('th', { text: 'Biom' }), el('th', { class: 'num', text: 'Komórki' })),
+          el('th', { text: 'Pozycja' }), el('th', { text: 'Biom' }),
+          el('th', { class: 'num', text: 'Komórki' })),
         all.slice(0, 260).map(s => el('tr', { class: 'clickable', onclick: () => this.speciesDetail(s) },
           el('td', {}, el('span', { class: 'dot', style: { background: hsl(s.hue, 0.7, 0.6) } }), s.name),
           el('td', { text: s.count > 0 ? 'żyje' : 'wymarły' }),
@@ -169,6 +170,7 @@ export class Screens {
           el('td', { class: 'num', text: String(s.peak) }),
           el('td', { class: 'num', text: yr(s.born) }),
           el('td', { text: s.dominantDiet().label }),
+          el('td', { text: s.trophic || '—' }),
           el('td', { text: s.mainBiome() }),
           el('td', { class: 'num', text: s.avg.cells.toFixed(1) }))))
         : el('div', { class: 'empty', text: 'Żaden gatunek jeszcze nie powstał.' }));

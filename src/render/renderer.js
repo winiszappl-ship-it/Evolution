@@ -5,6 +5,9 @@ import { TRAITS } from '../bio/genome.js';
 
 // Barwa akcentu dla każdej zdolności komórki — wyłącznie dla czytelności.
 const TRAIT_HUE = [110, 18, 185, 320, 40, 55, 275, 35, 210, 340];
+// Powyżej tylu okruchów naraz rysujemy punkty zamiast obrazków — inaczej
+// przy oddaleniu klatka rozsypuje się na tysiącach wywołań drawImage.
+const MAX_FOOD_SPRITES = 900;
 
 export const OVERLAYS = [
   { key: 'none', name: 'Bez nakładki' },
@@ -28,6 +31,10 @@ export class Renderer {
     this.showUI = true;
     this.selected = null;
     this.time = 0;
+    this.foodSprite = new Image();
+    this.foodSpriteReady = false;
+    this.foodSprite.onload = () => { this.foodSpriteReady = true; };
+    this.foodSprite.src = 'assets/pokarm.png';
     this.buildTerrain();
   }
 
@@ -176,17 +183,38 @@ export class Renderer {
   /** Okruchy pokarmu — to, po co w ogóle warto się ruszyć. */
   drawFood(ctx) {
     const cam = this.camera;
-    if (cam.zoom < 0.55 || !this.sim.world.food.count) return;
+    const food = this.sim.world.food;
+    if (cam.zoom < 0.55 || !food.count) return;
     const b = cam.viewBounds();
     const z = cam.zoom;
-    ctx.fillStyle = 'rgba(198,152,86,0.8)';
+
+    if (!this._foodBuf) this._foodBuf = [];
+    const buf = this._foodBuf;
+    buf.length = 0;
+    food.forEachInBounds(b, (x, y, e) => {
+      if (buf.length < 18000) buf.push(x, y, e);
+    });
+    const n = buf.length / 3;
+    if (!n) return;
+
+    // Z bliska okruch wygląda jak to, czym jest; z daleka wystarczy punkt.
+    if (this.foodSpriteReady && z > 1.4 && n <= MAX_FOOD_SPRITES) {
+      for (let i = 0; i < buf.length; i += 3) {
+        const p = cam.worldToScreen(buf[i], buf[i + 1]);
+        const s = clamp((1.1 + Math.sqrt(buf[i + 2]) * 0.55) * z * 0.5, 5, 28);
+        ctx.drawImage(this.foodSprite, p.x - s / 2, p.y - s / 2, s, s);
+      }
+      return;
+    }
+
+    ctx.fillStyle = 'rgba(216,72,58,0.85)';
     ctx.beginPath();
-    this.sim.world.food.forEachInBounds(b, (x, y, e) => {
-      const p = cam.worldToScreen(x, y);
-      const r = Math.max(0.8, Math.min(3.5, 0.35 + Math.sqrt(e) * 0.22) * z * 0.45);
+    for (let i = 0; i < buf.length; i += 3) {
+      const p = cam.worldToScreen(buf[i], buf[i + 1]);
+      const r = Math.max(0.8, Math.min(3.5, 0.35 + Math.sqrt(buf[i + 2]) * 0.22) * z * 0.45);
       ctx.moveTo(p.x + r, p.y);
       ctx.arc(p.x, p.y, r, 0, TAU);
-    });
+    }
     ctx.fill();
   }
 

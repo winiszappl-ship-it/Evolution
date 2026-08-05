@@ -1,6 +1,6 @@
 import { World, TILE, SECTOR_TILES } from '../world/world.js';
 import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
-import { Organism, DETAIL, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
+import { Organism, DETAIL, isConsumer, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
 import { SpeciesRegistry } from '../bio/species.js';
 import { Chronicle, Watcher } from './chronicle.js';
 import { Disasters } from './disasters.js';
@@ -498,6 +498,9 @@ export class Simulation {
     const got = take * 0.62;                 // straty przy przekazywaniu energii
     a.energy = Math.min(a.maxEnergy, a.energy + got);
     a.gain.predation += got;
+    // Zdobycz zapamiętuje, czym sama żyła — inaczej nie dałoby się odróżnić
+    // zjadania producenta od zjadania kogoś, kto zjadł producenta.
+    if (isConsumer(b)) a.gain.preyConsumer += got; else a.gain.preyProducer += got;
     a._sector.activity += 0.05;
     if (b.integrity <= 0 || b.energy <= 0) {
       b.alive = false;

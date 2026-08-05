@@ -117,6 +117,32 @@ dotyka cudzej tkanki, po prostu ją trawi. Czy nazwiemy to polowaniem,
 pasożytnictwem czy padlinożerstwem, zależy od tego, co ta tkanka robiła
 wcześniej.
 
+### Nie ma mięsożerców ani roślinożerców — jest pomiar
+
+Żaden organizm nie należy do gatunku pokarmowego. Nie ma flagi „drapieżnik",
+nie ma listy roślin, nie ma reguły mówiącej, kto kogo może zjeść. Jest jedna
+mechanika: komórka zdolna do trawienia, która dotknie cudzej tkanki, pobiera
+z niej energię. Ta sama maszyneria działa na ciele martwym i żywym.
+
+Pozycja troficzna jest natomiast **mierzona i pokazywana** — bo pytanie „kto
+tu kogo zjada" jest sensowne, tylko odpowiedź musi iść za faktami, a nie je
+wyprzedzać. Każdy organizm zapamiętuje, skąd wzięła się jego energia, a przy
+zjadaniu zapisuje też, czym żywiła się ofiara. Stąd biorą się etykiety:
+
+| etykieta | co znaczy |
+|---|---|
+| producent | większość energii ze światła lub z materii rozpuszczonej |
+| padlinożerca | większość z martwej materii stałej |
+| konsument pierwszego rzędu | zjada głównie producentów — odpowiednik roślinożercy |
+| konsument drugiego rzędu | zjada głównie konsumentów — odpowiednik mięsożercy |
+| wszystkożerca | żadne źródło nie przeważa |
+
+Różnica wobec zwykłej gry jest zasadnicza. Etykieta nie ogranicza organizmu:
+„konsument drugiego rzędu" może w następnym pokoleniu zostać producentem, jeśli
+mutacja przestawi jego komórki, a jego potomek nie dziedziczy roli — dziedziczy
+DNA. Etykieta może się też zmienić w ciągu jednego życia, bo opisuje to, co
+organizm faktycznie zjadł, a nie to, czym miał być.
+
 ### Ruch wynika z sił, nie z animacji
 
 Ciało jest układem punktów materialnych połączonych sprężynami. Wiązanie, przy
@@ -256,6 +282,7 @@ organizm, który musi sobie w niej poradzić sam.
 
 ```
 index.html, styles.css     interfejs
+assets/                    grafika (okruch pokarmu)
 src/core/                  generator liczb losowych, szum, magistrala zdarzeń
 src/world/                 teren, biomy, klimat, chemia kafli, okruchy pokarmu
 src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,

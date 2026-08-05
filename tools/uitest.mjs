@@ -93,6 +93,17 @@ await page.waitForTimeout(1800);
 console.log('zaznaczony organizm:', JSON.stringify(picked));
 await shot('06-organizm');
 
+// pokarm z bliska — sprawdzamy, czy obrazek okruchu się wczytał i rysuje
+await page.evaluate(() => { window.evolution.camera.tzoom = 9; });
+await page.waitForTimeout(1500);
+const foodInfo = await page.evaluate(() => ({
+  obrazek: window.evolution.renderer.foodSpriteReady,
+  okruchy: window.evolution.sim.world.food.count,
+  troficzne: [...new Set(window.evolution.sim.organisms.map(o => o.diet().trophic))],
+}));
+console.log('pokarm:', JSON.stringify(foodInfo));
+await shot('06b-pokarm');
+
 // ekrany
 for (const [label, act] of [['Encyklopedia', 'encyclopedia'], ['Kronika', 'chronicle'],
 ['Laboratorium', 'lab'], ['Bank DNA', 'bank']]) {

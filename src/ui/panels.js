@@ -162,6 +162,7 @@ export function organismPanel(o, app) {
     row('Wysokość', o.z > 0.05 ? `${o.z.toFixed(2)} (w powietrzu)` : 'na podłożu')));
 
   const dietRows = el('div', { class: 'section' }, el('h4', { text: 'Skąd bierze energię' }));
+  dietRows.appendChild(row('Pozycja troficzna', d.trophic || 'nieokreślona'));
   const labels = {
     photo: 'światło', absorb: 'materia rozpuszczona',
     detritus: 'materia stała', predation: 'materia żywa',
@@ -247,6 +248,7 @@ export function speciesSummaryRows(sp, sim) {
     row('Potomne gatunki', String(sp.children.length)),
     row('Główny biom', sp.mainBiome()),
     row('Sposób odżywiania', sp.dominantDiet().label),
+    row('Pozycja troficzna', sp.trophic || 'nieokreślona'),
     row('Średnio komórek', sp.avg.cells.toFixed(1)),
     row('Średnio neuronów', sp.avg.neurons.toFixed(1)),
     row('Średnie pokolenie', sp.avg.generation.toFixed(0)),
