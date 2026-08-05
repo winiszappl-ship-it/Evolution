@@ -1,6 +1,6 @@
 import { generateTerrain } from './worldgen.js';
-import { BIOME_DEF, BIOME, isWater } from './biomes.js';
-import { clamp, lerp } from '../core/util.js';
+import { BIOME_DEF, isWater } from './biomes.js';
+import { clamp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
 import { encodeU16, decodeU16 } from '../core/codec.js';
 

@@ -1,7 +1,7 @@
 import { World, TILE, SECTOR_TILES } from '../world/world.js';
 import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
 import { Organism, DETAIL, resetOrgSeq, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
-import { Genome, resetGenomeSeq } from '../bio/genome.js';
+import { Genome } from '../bio/genome.js';
 import { SpeciesRegistry } from '../bio/species.js';
 import { Chronicle, Watcher } from './chronicle.js';
 import { Disasters } from './disasters.js';

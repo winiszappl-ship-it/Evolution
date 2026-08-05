@@ -1,8 +1,7 @@
 import { develop } from './develop.js';
 import { buildBrain, stepBrain } from './brain.js';
 import { Genome } from './genome.js';
-import { clamp, TAU, tanhApprox } from '../core/util.js';
-import { TILE } from '../world/world.js';
+import { clamp, TAU } from '../core/util.js';
 
 let ORG_SEQ = 1;
 export function resetOrgSeq(v = 1) { ORG_SEQ = v; }

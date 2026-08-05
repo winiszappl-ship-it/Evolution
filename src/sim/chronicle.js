@@ -1,6 +1,4 @@
 import { TICKS_PER_YEAR } from '../world/climate.js';
-import { formatNumber } from '../core/util.js';
-import { biomeName } from '../world/biomes.js';
 import { bus } from '../core/bus.js';
 
 const MAX_ENTRIES = 900;

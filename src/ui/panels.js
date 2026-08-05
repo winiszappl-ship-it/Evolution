@@ -1,7 +1,7 @@
 import { el, toast } from './dom.js';
 import { formatNumber, clamp, hsl } from '../core/util.js';
 import { biomeName } from '../world/biomes.js';
-import { ACT_NAME, SIG_NAME, TRAITS, TRAIT_LABEL, PARAM_KEYS } from '../bio/genome.js';
+import { ACT_NAME, SIG_NAME, TRAIT_LABEL } from '../bio/genome.js';
 import { SENSE_MOD } from '../bio/brain.js';
 import { TICKS_PER_YEAR } from '../world/climate.js';
 import { OVERLAYS } from '../render/renderer.js';

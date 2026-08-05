@@ -1,4 +1,4 @@
-import { Genome, ACT, SIG_COUNT, MORPHOGENS, TRAITS } from './genome.js';
+import { Genome, ACT, MORPHOGENS, TRAITS } from './genome.js';
 import { clamp } from '../core/util.js';
 
 /**

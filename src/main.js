@@ -7,10 +7,8 @@ import { el, openModal, closeModal, isModalOpen, modalDismissable, toast } from 
 import * as store from './persist/store.js';
 import { DEFAULT_PARAMS } from './world/worldgen.js';
 import { defaultDesign } from './bio/seed.js';
-import { BIOME } from './world/biomes.js';
 import { TILE } from './world/world.js';
 import { TICKS_PER_YEAR } from './world/climate.js';
-import { clamp } from './core/util.js';
 import { bus } from './core/bus.js';
 
 class App {

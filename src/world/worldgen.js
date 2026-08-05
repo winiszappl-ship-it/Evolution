@@ -1,6 +1,6 @@
 import { Noise2D } from '../core/noise.js';
 import { RNG, hashSeed } from '../core/rng.js';
-import { clamp, lerp, smoothstep } from '../core/util.js';
+import { clamp, smoothstep } from '../core/util.js';
 import { BIOME } from './biomes.js';
 
 export const MAP_SIZES = {
