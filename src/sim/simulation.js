@@ -152,6 +152,7 @@ export class Simulation {
     const POOL = this.poolInterval;
 
     const births = [];
+    const ready = [];
     let died = 0;
 
     for (let i = 0; i < this.organisms.length; i++) {
@@ -191,12 +192,30 @@ export class Simulation {
 
       if (!o.alive) { died++; continue; }
 
-      if (o.canReproduce() && this.organisms.length + births.length < this.maxOrganisms) {
-        let partner = null;
-        if (o.genome.params.sexual > 0.35) partner = this.findPartner(o);
-        const child = o.reproduce(world, this.rng, 0.5, partner);
-        births.push(child);
+      if (o.canReproduce()) ready.push(o);
+    }
+
+    /**
+     * Sufit populacji to granica pamięci, nie prawo tego świata. Dopóki jest
+     * luźno, nie robi nic. Gdy zrobi się ciasno, nie może o rozrodzie
+     * decydować kolejność w tablicy — a decydowała: pętla szła po indeksach,
+     * więc miejsca zajmowali ci, którzy powstali wcześniej, niezależnie od
+     * tego, jak im się wiodło. Świat spędza większość czasu przy suficie, więc
+     * była to stała premia za sam wiek wpisu. Miejsca rozlosowujemy.
+     */
+    let slots = this.maxOrganisms - this.organisms.length;
+    if (ready.length > slots) {
+      for (let i = ready.length - 1; i > 0; i--) {
+        const j = this.rng.int(i + 1);
+        const t = ready[i]; ready[i] = ready[j]; ready[j] = t;
       }
+      ready.length = Math.max(0, slots);
+    }
+    for (let i = 0; i < ready.length; i++) {
+      const o = ready[i];
+      let partner = null;
+      if (o.genome.params.sexual > 0.35) partner = this.findPartner(o);
+      births.push(o.reproduce(world, this.rng, 0.5, partner));
     }
 
     this.interactions(tick);

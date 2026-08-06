@@ -76,8 +76,13 @@ console.log(`z choć jednym mięśniem: ${muscle}, z choć jednym receptorem: ${
 console.log(`żywych na koniec: ${aliveTot}, z mięśniami ${aliveMuscle}, `
   + `z receptorami ${aliveSensor}, w ruchu ${aliveMoving}`);
 
-check(born > 4000, 'próba jest dość liczna, by orzekać o rzadkich zdarzeniach',
-  `${born} urodzeń`);
+// Ile urodzeń wystarczy, żeby zero coś znaczyło. Przy mierzonej częstości
+// mięśnia rzędu 1 na 160 urodzeń próba 1500 daje kilkanaście oczekiwanych
+// zdarzeń — brak choćby jednego byłby wtedy wynikiem, a nie pechem. Próg
+// nie jest stały w historii tego pliku: gdy podział wymagał tylko energii,
+// światy rodziły dziesiątki tysięcy osobników i próg wynosił 4000.
+check(born > 1500, 'próba jest dość liczna, by orzekać o rzadkich zdarzeniach',
+  `${born} urodzeń, mięsień co ${muscle ? Math.round(born / muscle) : '∞'} urodzeń`);
 check(both > 0, 'kurczliwość i wielokomórkowość spotykają się w jednym ciele',
   'przed osobnym wyciszonym genem: 0 na 2047 urodzonych');
 check(muscle > 0, 'mięsień jest w zasięgu mutacji — powstał choć raz',

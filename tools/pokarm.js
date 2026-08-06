@@ -52,7 +52,24 @@ const spot = { x: sim.world.widthUnits / 2, y: sim.world.heightUnits / 2 };
 sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 700, 3);
 const ticks = Math.round(years * TICKS_PER_YEAR);
-for (let t = 0; t < ticks; t++) sim.step(1);
+
+// Materia roślinna jest pierwotna: jest w świecie od jego powstania i nikt jej
+// nie dorabia. Żywy organizm nie odkłada okruchu z nadmiaru energii — nadwyżka
+// wraca do kafla jako materia rozpuszczona. Pilnujemy, żeby zapas roślinny
+// nigdy nie urósł: wzrost oznaczałby, że coś żywego znów produkuje pokarm.
+const plantEnergy = () => {
+  const f = sim.world.food;
+  let e = 0;
+  for (let i = 0; i < f.used.length; i++) if (f.used[i] && f.kind[i] === FOOD_PLANT) e += f.e[i];
+  return e;
+};
+let plantStart = plantEnergy(), plantPeak = plantStart, grew = 0;
+for (let t = 0; t < ticks; t++) {
+  sim.step(1);
+  if (t % 64 !== 0) continue;
+  const e = plantEnergy();
+  if (e > plantPeak + 1e-6) { grew++; plantPeak = e; }
+}
 
 console.log(`\npo ${years} latach: ${sim.organisms.length} organizmów, `
   + `${sim.world.food.count} okruchów w świecie\n`);
@@ -78,7 +95,7 @@ if (motile.length >= 3 && still.length >= 3) {
 const totalEaten = sim.organisms.reduce((a, o) => a + o.gain.plant + o.gain.carrion, 0);
 check(totalEaten > 0, 'pokarm stały jest w ogóle zjadany', `${totalEaten.toFixed(0)} energii`);
 
-// --- dwa rodzaje pokarmu, oba pochodzące od organizmów ---
+// --- skąd bierze się pokarm stały ---
 const f = sim.world.food;
 let plant = 0, remains = 0;
 for (let i = 0; i < f.used.length; i++) {
@@ -86,12 +103,16 @@ for (let i = 0; i < f.used.length; i++) {
   if (f.kind[i] === FOOD_PLANT) plant++; else remains++;
 }
 console.log(`okruchy w świecie: ${plant} roślinnych, ${remains} ze szczątków`);
-check(plant > 0 && remains > 0,
-  'w świecie występują oba rodzaje pokarmu naraz');
+console.log(`materia roślinna: na starcie ${plantStart.toFixed(0)} energii, `
+  + `szczyt ${plantPeak.toFixed(0)}, teraz ${plantEnergy().toFixed(0)}`);
 
-const shedTotal = sim.organisms.reduce((a, o) => a + o.gain.plant, 0);
-check(shedTotal > 0, 'materia roślinna trafia do konsumentów',
-  `${shedTotal.toFixed(0)} energii`);
+check(grew === 0, 'żywy organizm nie wytwarza pokarmu roślinnego',
+  grew ? `zapas urósł ${grew} razy` : 'zapas roślinny nigdy nie urósł');
+check(remains > 0, 'szczątki są odnawialnym pokarmem stałym — powstają ze śmierci',
+  `${remains} okruchów`);
+check(plantStart > 0,
+  'materia roślinna jest w świecie od jego powstania',
+  `${plantStart.toFixed(0)} energii pierwotnej — zapas nieodnawialny`);
 
 console.log(failures === 0 ? '\nPokarm działa jako powód do ruchu.' : `\n${failures} sprawdzeń nieudanych.`);
 process.exit(failures ? 1 : 0);

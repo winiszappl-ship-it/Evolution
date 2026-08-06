@@ -46,6 +46,8 @@ export class Watcher {
     this.extinctionWatch = 0;
     this.contactPairs = new Map();
     this.lastCheck = 0;
+    this.popMark = 0;
+    this.reportedCeiling = false;
   }
 
   onBirth(org, speciesInfo, sim) {
@@ -90,6 +92,34 @@ export class Watcher {
       if (!ch.records.biggestExtinction || pct > ch.records.biggestExtinction) ch.records.biggestExtinction = pct;
     }
     this.lastSpeciesCount = n;
+
+    // Wybuch populacji: to samo, co wymieranie, tylko w drugą stronę.
+    // Kronika milczała o wzroście, więc ostatnie podwojenia — przy tempie
+    // 100× mieszczące się w sekundzie realnego czasu — wyglądały jak tysiąc
+    // organizmów powstałych znikąd. Rosną wykładniczo od pierwszej komórki;
+    // widać to dopiero na końcu, bo tak wygląda krzywa wykładnicza.
+    const pop = sim.organisms.length;
+    if (pop >= 24 && pop >= this.popMark * 2) {
+      if (this.popMark > 0) {
+        ch.record('life', `Populacja podwoiła się do ${pop} organizmów.`, pop >= 500);
+      }
+      this.popMark = pop;
+    } else if (pop < this.popMark * 0.5) {
+      this.popMark = pop;
+    }
+
+    // Sufit populacji nie jest zjawiskiem przyrodniczym, tylko granicą pamięci.
+    // Skoro wpływa na to, co gracz widzi, świat ma obowiązek się do tego przyznać.
+    if (pop >= sim.maxOrganisms * 0.98) {
+      if (!this.reportedCeiling) {
+        ch.record('world', `Liczba organizmów sięgnęła granicy tego świata `
+          + `(${sim.maxOrganisms}). Powyżej niej nikt się już nie urodzi — `
+          + `to ograniczenie silnika, nie przyrody.`, true);
+        this.reportedCeiling = true;
+      }
+    } else if (pop < sim.maxOrganisms * 0.8) {
+      this.reportedCeiling = false;
+    }
 
     if (sim.organisms.length === 0 && this.hadLife) {
       if (!this.reportedSterile) {

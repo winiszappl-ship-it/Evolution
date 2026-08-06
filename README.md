@@ -218,30 +218,41 @@ Rozpuszczona materia organiczna została w polu kafla jako osobny, uboższy
 zasób. Jest wszędzie po trochu i nie trzeba po nią iść — to nisza dla tych,
 którzy filtrują, zamiast szukać.
 
-### Dwa rodzaje okruchów, obydwa z organizmów
+### Dwa rodzaje okruchów
 
 Okruch jest jednego z dwóch rodzajów, ale nie dlatego, że świat zna rośliny
 i zwierzęta. Rodzaj mówi wyłącznie, skąd materia pochodzi.
 
-**Szczątki** zostają po śmierci — tam, gdzie ciało padło.
+**Szczątki** zostają po śmierci — tam, gdzie ciało padło. To jedyny odnawialny
+pokarm stały w tym świecie.
 
-**Materia roślinna** powstaje inaczej i to jest ciekawsza część. Zapas energii
-ma granicę, a producent w dobrym miejscu wytwarza więcej, niż zdoła zmieścić.
-Wcześniej ta nadwyżka po prostu znikała: jedna linijka ucinała energię do
-maksimum i reszta przepadała. Była to cicha dziura w zachowaniu energii.
+**Materia roślinna** to pierwotna materia organiczna leżąca na planecie, zanim
+cokolwiek zaczęło żyć. Zapas jednorazowy: nikt go nie dorabia i po kilku latach
+świata jest zjedzony do zera.
 
-Teraz nadwyżka jest wydalana jako okruch. Nic nie kosztuje organizmu — energia
-i tak była nie do utrzymania — ale ląduje na ziemi jako pokarm. Stąd bierze się
-odnawialne źródło jedzenia niezależne od śmierci, i stąd bierze się to, że
-producent może wyżywić kogoś **za życia**, nie dopiero swoim trupem.
-
-Rodzaj wydaliny idzie za tym, czym organizm żył: kto żył ze światła, zostawia
-materię roślinną; kto żył z cudzej pracy — szczątki.
+Okruch to ciało albo jego część — nigdy wydzielina. Żywy organizm nie odkłada
+okruchu z nadmiaru energii. Zapas energii ma granicę i producent w dobrym
+miejscu wytwarza więcej, niż zdoła zmieścić, ale ta nadwyżka wraca do kafla jako
+materia rozpuszczona, a nie jako leżące na ziemi jedzenie. Znajdzie ją ten, kto
+filtruje; kto szuka ciał, musi poczekać, aż ktoś umrze.
 
 Nikt niezjedzony okruch rozkłada się na minerały, więc obieg materii domyka się
-nawet bez padlinożerców. Jedynym pokarmem, który nie pochodzi z organizmu, jest
-pierwotna materia organiczna leżąca na planecie, zanim cokolwiek zaczęło żyć —
-jednorazowe wyposażenie świata, nie źródło produkujące bez końca.
+nawet bez padlinożerców.
+
+### Podział raz na siedem dni
+
+Podział jest jedyną drogą rozmnażania i wymaga dwóch rzeczy naraz: nadmiaru
+energii ponad koszt własnego ciała oraz siedmiu dni świata od poprzedniego
+podziału. Odstęp obowiązuje każdego tak samo, także osobnika świeżo urodzonego —
+dla niego liczy się od chwili narodzin.
+
+Wcześniej jedynym hamulcem była energia, a dojrzałość trwała dwa takty na
+komórkę, czyli dla pojedynczej komórki dwa takty w ogóle. Świat dobijał wtedy do
+sufitu populacji w kilkaset taktów i już z niego nie schodził: 97% zgonów
+z głodu, jeden gatunek, zero starć. Po wprowadzeniu odstępu populacje w sześciu
+badanych światach wyniosły 75–1582 zamiast 1587–1597, śmierć z cudzej ręki
+wzrosła z 0,02% do 0,39%, a mięsień pojawia się raz na ~160 urodzeń zamiast raz
+na ~5000.
 
 ### Ciało kosztuje energię, którą trzeba mieć
 

@@ -2,8 +2,8 @@ import { develop } from './develop.js';
 import { TRAIT_UPKEEP } from './genome.js';
 import { buildBrain, stepBrain } from './brain.js';
 import { Genome } from './genome.js';
-import { FOOD_PLANT, FOOD_REMAINS } from '../world/food.js';
 import { clamp, TAU } from '../core/util.js';
+import { TICKS_PER_DAY } from '../world/climate.js';
 
 let ORG_SEQ = 1;
 
@@ -20,9 +20,8 @@ export const ABSORB_RATE = 0.055;
 // realny zysk. To ta nagroda sprawia, że szukanie pokarmu się opłaca; gdyby
 // tempo ledwo pokrywało utrzymanie, ruch nie miałby czego zwracać.
 export const DIGEST_RATE = 0.5;
-// Ile nadwyżki musi się uzbierać, zanim organizm wydali ją jako okruch.
-// Bez progu świat zasypałby się pyłem po ułamku energii.
-const SHED_PARCEL = 3;
+// Najkrótszy możliwy odstęp między podziałami — siedem dni świata.
+export const REPRO_INTERVAL = TICKS_PER_DAY * 7;
 
 /**
  * Czy ten organizm żył z cudzej pracy? Rozstrzyga to, co faktycznie zjadł;
@@ -127,7 +126,6 @@ export class Organism {
       photo: 0, absorb: 0, plant: 0, carrion: 0, predation: 0,
       preyProducer: 0, preyConsumer: 0,
     };
-    this._shed = 0;          // nadwyżka czekająca na wydalenie
     this._foodTake = { plant: 0, carrion: 0 };
     this.lastGainTotal = 0;
     this.contact = 0;
@@ -135,6 +133,7 @@ export class Organism {
     this.neighborDensity = 0;
     this.moveCost = 0;
     this.deathCause = null;
+    this.lastReproAge = 0;   // wiek przy ostatnim podziale — odstęp liczy się od niego
 
     // przewaga w wyścigu o światło rośnie z zasięgiem ciała, ale nasyca się
     this.lightEdge = 1 + Math.min(4, this.body.radius * 0.75);
@@ -551,19 +550,13 @@ export class Organism {
     this.age += dt;
     this.moveCost = 0;
 
-    // Zapas ma granicę, ale nadwyżka nie znika w powietrzu — organizm ją
-    // wydala. To jedyne źródło materii roślinnej w tym świecie i zarazem
-    // jedyny sposób, w jaki producent może kogokolwiek wyżywić za życia.
+    // Zapas ma granicę, a nadwyżka nie znika w powietrzu — wraca do kafla
+    // jako materia rozpuszczona. Żywy organizm nie odkłada z niej okruchu
+    // pokarmu: okruch to ciało albo jego część, a nie wydzielina. Stały
+    // pokarm bierze się z tego, co umarło, i z pierwotnej materii świata.
     if (this.energy > this.maxEnergy) {
-      this._shed += this.energy - this.maxEnergy;
+      world.addDetritus(ti, (this.energy - this.maxEnergy) * 0.8);
       this.energy = this.maxEnergy;
-      if (this._shed >= SHED_PARCEL) {
-        const ang = this.heading + Math.PI + (Math.random() - 0.5);
-        const d = this.radius + 1.2;
-        world.food.add(this.x + Math.cos(ang) * d, this.y + Math.sin(ang) * d,
-          this._shed * 0.8, isConsumer(this) ? FOOD_REMAINS : FOOD_PLANT);
-        this._shed = 0;
-      }
     }
 
     if (this.energy <= 0 || this.integrity <= 0 || this.age > P.lifespan) {
@@ -572,9 +565,15 @@ export class Organism {
     }
   }
 
+  /**
+   * Podział jest jedyną drogą rozmnażania i wymaga dwóch rzeczy naraz:
+   * nadmiaru energii ponad koszt własnego ciała oraz siedmiu dni od
+   * poprzedniego podziału. Odstęp obowiązuje każdego tak samo — także
+   * osobnika świeżo urodzonego, dla którego liczy się od chwili narodzin.
+   */
   canReproduce() {
     return this.alive && this.energy > this.body.buildCost * this.genome.params.reproThr
-      && this.age > this.body.cellCount * 2;
+      && this.age - this.lastReproAge >= REPRO_INTERVAL;
   }
 
   /** Podział. Potomek dostaje zmutowaną kopię DNA i część energii rodzica. */
@@ -604,6 +603,7 @@ export class Organism {
     child.heading = rng.float(0, TAU);
 
     this.energy -= give;
+    this.lastReproAge = this.age;
     this.offspring++;
     return child;
   }

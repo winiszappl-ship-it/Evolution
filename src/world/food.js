@@ -14,13 +14,14 @@ import { TILE } from './world.js';
  * i zwierzęta. Rodzaj mówi tylko, skąd materia pochodzi: od kogoś, kto żył ze
  * światła, czy od kogoś, kto żył z cudzej pracy.
  *
- * Okruchy powstają wyłącznie z organizmów: z ich śmierci albo z nadwyżki,
- * której nie zmieściły w swoim zapasie. Świat nie produkuje ich z niczego —
- * jedynym wyjątkiem jest pierwotna materia organiczna obecna na planecie,
- * zanim cokolwiek zaczęło żyć.
+ * Okruch to ciało albo jego część — nigdy wydzielina. Żywy organizm nie
+ * odkłada okruchu z nadmiaru energii; nadwyżka wraca do kafla jako materia
+ * rozpuszczona i tam ją znajdzie ten, kto filtruje. Stały pokarm ma więc dwa
+ * źródła: śmierć oraz pierwotną materię organiczną obecną na planecie, zanim
+ * cokolwiek zaczęło żyć. Ta druga jest zapasem nieodnawialnym.
  */
 
-export const FOOD_PLANT = 0;     // materia wydalona przez organizm żyjący ze światła
+export const FOOD_PLANT = 0;     // pierwotna materia organiczna planety
 export const FOOD_REMAINS = 1;   // to, co zostało po ciele
 
 const MAX_FOOD = 5000;
