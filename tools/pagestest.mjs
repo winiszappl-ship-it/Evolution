@@ -41,9 +41,18 @@ await page.waitForTimeout(2500);
 const st = await page.evaluate(() => ({
   rok: +window.evolution.sim.year.toFixed(2),
   organizmy: window.evolution.sim.organisms.length,
-  zapis: !!window.evolution.saveWorld('test podkatalogu') || window.evolution.worldId,
+  // zapisów nie ma i nie ma ich mieć — świat istnieje wyłącznie teraz
+  zapis: typeof window.evolution.saveWorld,
+  moduly: performance.getEntriesByType('resource').filter(r => r.name.endsWith('.js')).length,
 }));
 console.log('symulacja pod podkatalogiem:', JSON.stringify(st));
-console.log(errors.length ? 'BŁĘDY:\n  ' + errors.slice(0, 10).join('\n  ') : 'brak błędów');
+
+let bad = errors.length;
+if (st.organizmy < 1) { console.log('BŁĄD: pod podkatalogiem nie powstało życie'); bad++; }
+if (st.zapis !== 'undefined') { console.log('BŁĄD: zapis świata wrócił do gry'); bad++; }
+if (st.moduly < 10) { console.log(`BŁĄD: doszło tylko ${st.moduly} modułów — ścieżki się nie rozwiązały`); bad++; }
+
+console.log(errors.length ? 'BŁĘDY:\n  ' + errors.slice(0, 10).join('\n  ') : 'brak błędów sieci i konsoli');
+console.log(bad ? `\n${bad} problemów.` : '\nGra działa serwowana z podkatalogu — GitHub Pages ją uniesie.');
 await browser.close(); server.close();
-process.exit(errors.length ? 1 : 0);
+process.exit(bad ? 1 : 0);
