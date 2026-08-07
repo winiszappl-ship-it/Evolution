@@ -540,7 +540,6 @@ export class Organism {
     // uszkodzenia od skrajnych warunków — błona chroni, ale kosztuje
     const shield = 0.4 + P.membrane * 1.2 + cap.armor * 0.02;
     const stress = Math.max(0, Math.abs(temp - optT) - 26 - shield * 8) * 0.0016
-      + world.burn[ti] * 0.05
       + Math.max(0, 0.02 - oxy) * 0.6;
     if (stress > 0) this.hurtAll(stress * dt);
     if (this._capDirty) this.recomputeCap();

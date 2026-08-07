@@ -281,13 +281,17 @@ Obieg materii jest zamknięty. Martwe organizmy stają się detrytusem, detrytus
 rozkłada się na minerały, minerały wracają do fotosyntezy. Wymieranie w jednym
 miejscu użyźnia glebę w innym.
 
-### Katastrofy nie są skryptem
+### Nie ma katastrof
 
-Pożar wybucha tam, gdzie jest sucho, ciepło i jest co palić — i rozprzestrzenia
-się według tych samych warunków. Epidemia potrzebuje gęstej i genetycznie
-jednolitej populacji. Erupcje, susze, powodzie i uderzenia ciał niebieskich
-zdarzają się losowo, ale ich skutki wynikają ze stanu świata, a nie z gotowego
-scenariusza.
+Świat nie zsyła na życie pożarów, epidemii, erupcji, susz, powodzi ani uderzeń
+ciał niebieskich. Były tu wcześniej i działały na warunkach, nie na scenariuszu,
+ale każda z nich była zdarzeniem przychodzącym z zewnątrz — czymś, co dzieje się
+organizmom, a nie czymś, co robią one same.
+
+To, co zostaje, jest ciągłe i wynika wprost z tego, jak świat działa: dobowe
+i sezonowe wahania temperatury, zachmurzenie, deszcz, prądy, wyczerpywanie się
+minerałów tam, gdzie zrobi się gęsto, i ich powolna odbudowa. Presja bierze się
+z sąsiadów i z pory roku, nie z ręki, która co jakiś czas w coś uderza.
 
 ### Gatunek to rozejście się populacji, nie upływ czasu
 
@@ -325,7 +329,7 @@ tego świata na zawsze.
 
 To nie jest brak funkcji, tylko ta sama zasada, co zakaz cofania czasu.
 Wczytanie zapisu byłoby cofnięciem czasu tylnymi drzwiami: pozwalałoby
-powtórzyć wymieranie, sprawdzić drugie rozgałęzienie, obejść skutki suszy.
+powtórzyć wymieranie, sprawdzić drugie rozgałęzienie, cofnąć nieudany podział.
 Świat, który da się przeładować, przestaje być jednorazowy — a to jego
 jednorazowość jest tu jedyną stawką.
 
@@ -342,7 +346,7 @@ src/core/                  generator liczb losowych, szum, magistrala zdarzeń
 src/world/                 teren, biomy, klimat, chemia kafli, okruchy pokarmu
 src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,
                            gatunki, projekt pierwszej komórki
-src/sim/                   pętla symulacji, katastrofy, kronika, osiągnięcia
+src/sim/                   pętla symulacji, kronika, osiągnięcia
 src/render/                kamera i rysowanie
 src/ui/                    panele, ekrany, elementy interfejsu
 src/persist/               Bank DNA i ustawienia w pamięci przeglądarki

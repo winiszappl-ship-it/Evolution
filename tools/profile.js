@@ -32,7 +32,6 @@ for (const m of ['metabolize', 'stepPhysics', 'stepBrainOnce', 'promote', 'repro
     return r;
   };
 }
-wrap(sim.disasters, 'step');
 wrap(sim.species, 'recount');
 wrap(sim.watcher, 'tick');
 

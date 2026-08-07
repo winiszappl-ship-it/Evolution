@@ -35,7 +35,7 @@ class App {
     bus.on('achievement', (a) => toast(a.title, a.desc));
     bus.on('chronicle', (e) => {
       if (e.important && e.kind !== 'achievement') {
-        toast(kindLabel(e.kind), e.text, e.kind === 'extinction' || e.kind === 'disaster' ? 'bad' : 'warn');
+        toast(kindLabel(e.kind), e.text, e.kind === 'extinction' ? 'bad' : 'warn');
       }
     });
 
@@ -328,7 +328,7 @@ class App {
 function kindLabel(kind) {
   return ({
     life: 'Życie', species: 'Nowy gatunek', extinction: 'Wymieranie',
-    disaster: 'Katastrofa', world: 'Świat', record: 'Rekord',
+    world: 'Świat', record: 'Rekord',
   })[kind] || 'Wydarzenie';
 }
 

@@ -78,7 +78,7 @@ export class Screens {
           slider('Ilość światła', p.light, 0.15, 2.2, 0.05, 'Jasność gwiazdy. Napędza fotosyntezę.', v => { p.light = v; }, v => `${v.toFixed(2)}×`)),
         el('div', {},
           preview, info,
-          slider('Poziom tlenu', p.oxygen, 0.01, 0.6, 0.01, 'Wysoki tlen przyspiesza metabolizm i pożary.', v => { p.oxygen = v; }, v => `${Math.round(v * 100)}%`),
+          slider('Poziom tlenu', p.oxygen, 0.01, 0.6, 0.01, 'Wysoki tlen przyspiesza metabolizm.', v => { p.oxygen = v; }, v => `${Math.round(v * 100)}%`),
           slider('Grawitacja', p.gravity, 0.15, 3, 0.05, 'Decyduje, jak trudno oderwać się od podłoża.', v => { p.gravity = v; }, v => `${v.toFixed(2)} g`),
           slider('Promieniowanie', p.radiation, 0, 1.5, 0.05, 'Zwiększa tempo mutacji — i liczbę nieudanych potomków.', v => { p.radiation = v; }, v => `${v.toFixed(2)}`))),
       el('div', { class: 'actions' },
@@ -318,8 +318,7 @@ export class Screens {
           el('div', { class: 'row' }, el('span', { text: 'Największe pokolenie' }), el('span', { text: formatNumber(sim.stats.maxGeneration) })),
           el('div', { class: 'row' }, el('span', { text: 'Biomasa' }), el('span', { text: formatNumber(sim.stats.biomass) })),
           el('div', { class: 'row' }, el('span', { text: 'Epoki życia' }), el('span', { text: String(sim.epochs + 1) })),
-          el('div', { class: 'row' }, el('span', { text: 'Tlen atmosfery' }), el('span', { text: `${(sim.world.globalOxygen * 100).toFixed(1)}%` })),
-          el('div', { class: 'row' }, el('span', { text: 'Odchylenie klimatu' }), el('span', { text: `${sim.world.globalTempOffset.toFixed(2)}°` })))),
+          el('div', { class: 'row' }, el('span', { text: 'Tlen atmosfery' }), el('span', { text: `${(sim.world.globalOxygen * 100).toFixed(1)}%` })))),
       el('div', { class: 'actions' },
         el('button', { class: 'primary', text: 'Nowa pierwsza komórka', onclick: () => { closeModal(); this.cellSetup(); } }),
         el('button', { text: 'Losowe DNA', onclick: () => place(() => randomGenomeFor(sim)) }),
@@ -338,7 +337,7 @@ export class Screens {
     const app = this.app, sim = app.sim;
     if (!sim) return this.mainMenu();
     const kinds = [['all', 'Wszystko'], ['life', 'Życie'], ['species', 'Gatunki'],
-    ['extinction', 'Wymierania'], ['disaster', 'Katastrofy'], ['achievement', 'Osiągnięcia'], ['record', 'Rekordy']];
+    ['extinction', 'Wymierania'], ['achievement', 'Osiągnięcia'], ['record', 'Rekordy']];
     const tabs = el('div', { class: 'tabs' },
       kinds.map(([k, l]) => el('button', { class: k === filter ? 'on' : '', text: l, onclick: () => this.chronicle(k) })));
 

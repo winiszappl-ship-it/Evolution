@@ -123,15 +123,13 @@ export function generateTerrain(params) {
   // --- rzeki: spływ z wysokich punktów do najniższego sąsiada ---
   carveRivers(elevation, biome, depth, moisture, W, H, seaLevel, rng);
 
-  // --- wulkany: ostre wierzchołki w pasmach grzbietowych ---
-  const volcanoes = [];
+  // --- wulkany: gorące, żyzne i ubogie w tlen podłoże w pasmach grzbietowych ---
   for (let y = 2; y < H - 2; y++) {
     for (let x = 2; x < W - 2; x++) {
       const i = y * W + x;
       if (biome[i] !== BIOME.MOUNTAIN) continue;
       const v = nVolc.at(x / W * scale * 3.1 + 77, y / H * scale * 3.1 - 41);
       if (v > 0.74 && rng.chance(0.35)) {
-        volcanoes.push({ x, y });
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             const j = (y + dy) * W + (x + dx);
@@ -157,7 +155,6 @@ export function generateTerrain(params) {
   return {
     W, H, seaLevel, params: p, seedNum,
     elevation, moisture, baseTemp, biome, depth,
-    volcanoes,
   };
 }
 

@@ -23,7 +23,6 @@ export class World {
     this.oxygen = new Float32Array(n);
     this.nutrientCap = new Float32Array(n);
     this.nutrientCapBase = new Float32Array(n);   // żyzność, do której gleba wraca
-    this.burn = new Float32Array(n);       // aktywny pożar / lawa
     this.photoLoad = new Float32Array(n);    // ile powierzchni chwyta światło na kaflu
     this.mineralLoad = new Float32Array(n);  // łączne zapotrzebowanie na minerały
     this.detritusLoad = new Float32Array(n); // łączne zapotrzebowanie na materię organiczną
@@ -77,7 +76,6 @@ export class World {
     // globalne pule — świat jako całość
     this.globalOxygen = this.params.oxygen;
     this.globalCO2 = 0.04;
-    this.globalTempOffset = 0;
   }
 
   /** Rozsypuje pierwotną materię organiczną — w miejscach, gdzie jest żyzno. */
@@ -137,7 +135,7 @@ export class World {
     const lat = (ty / (this.H - 1)) * 2 - 1;
     const seasonal = climate.axialTilt * -lat * climate.seasonPhase * 16;
     const diurnal = (climate.dayLight - 0.5) * (b.water ? 3 : 11);
-    return this.baseTemp[i] + b.tempMod + seasonal + diurnal + this.globalTempOffset + this.burn[i] * 30;
+    return this.baseTemp[i] + b.tempMod + seasonal + diurnal;
   }
 
   oxygenAt(i) {
@@ -200,7 +198,7 @@ export class World {
         this.detritus[i] *= keep;
         this.nutrient[i] = Math.min(this.nutrientCap[i] * 1.6, this.nutrient[i] + decayed * 0.85);
 
-        // gleba wyjałowiona przez suszę czy pożar odbudowuje się latami
+        // wyjałowiona gleba odbudowuje się latami
         const base = this.nutrientCapBase[i];
         if (this.nutrientCap[i] !== base) {
           this.nutrientCap[i] += (base - this.nutrientCap[i]) * (1 - Math.exp(-0.00025 * steps));
@@ -213,11 +211,6 @@ export class World {
         // tlen relaksuje do wartości atmosferycznej biomu
         const oTarget = this.globalOxygen * b.oxyMul;
         this.oxygen[i] += (oTarget - this.oxygen[i]) * (1 - Math.exp(-0.002 * steps));
-
-        // pożary i lawa wygasają
-        if (this.burn[i] > 0) {
-          this.burn[i] = Math.max(0, this.burn[i] - 0.004 * steps);
-        }
       }
     }
   }

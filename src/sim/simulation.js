@@ -4,7 +4,6 @@ import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
 import { Organism, DETAIL, isConsumer, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
 import { SpeciesRegistry } from '../bio/species.js';
 import { Chronicle, Watcher } from './chronicle.js';
-import { Disasters } from './disasters.js';
 import { genomeFromDesign, randomGenome, defaultDesign } from '../bio/seed.js';
 import { RNG } from '../core/rng.js';
 import { clamp, TAU } from '../core/util.js';
@@ -33,7 +32,6 @@ export class Simulation {
     this.species = new SpeciesRegistry();
     this.chronicle = new Chronicle();
     this.watcher = new Watcher(this.chronicle);
-    this.disasters = new Disasters(this.world, this.climate, this.chronicle);
     this.rng = new RNG(this.world.seedNum ^ 0x5eed);
     this.organisms = [];
     this.hash = new Map();
@@ -220,7 +218,6 @@ export class Simulation {
 
     this.interactions(tick);
     world.food.step(1);
-    this.disasters.step(this, 1);
 
     for (const c of births) {
       c._sector = world.sectorOf(c.x, c.y);

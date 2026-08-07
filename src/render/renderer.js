@@ -91,7 +91,6 @@ export class Renderer {
     ctx.drawImage(this.terrainCanvas, sx, sy, sw, sh, 0, 0, W, H);
 
     this.drawOverlay(ctx, sx, sy, sw, sh, W, H);
-    this.drawFires(ctx);
     this.drawFood(ctx);
     this.drawOrganisms(ctx);
     this.drawWeather(ctx, W, H);
@@ -259,28 +258,6 @@ export class Renderer {
         ctx.fillText(`${s.name} (${s.count})`, p.x + r + 4, p.y);
       }
     }
-  }
-
-  drawFires(ctx) {
-    const w = this.sim.world, cam = this.camera;
-    if (!this.sim.disasters.fireTiles.size) return;
-    const b = cam.viewBounds();
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (const i of this.sim.disasters.fireTiles) {
-      const tx = (i % w.W) * TILE, ty = ((i / w.W) | 0) * TILE;
-      if (tx < b.x0 - TILE || tx > b.x1 || ty < b.y0 - TILE || ty > b.y1) continue;
-      const p = cam.worldToScreen(tx + TILE / 2, ty + TILE / 2);
-      const s = TILE * cam.zoom;
-      const flick = 0.6 + Math.sin(this.time * 9 + i) * 0.25;
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, s * 1.1);
-      g.addColorStop(0, `rgba(255,190,90,${0.7 * flick})`);
-      g.addColorStop(0.5, `rgba(255,90,20,${0.35 * flick})`);
-      g.addColorStop(1, 'rgba(120,20,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(p.x - s * 1.1, p.y - s * 1.1, s * 2.2, s * 2.2);
-    }
-    ctx.restore();
   }
 
   drawOrganisms(ctx) {
