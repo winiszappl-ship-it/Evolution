@@ -17,7 +17,7 @@ export const CELL_DESIGN_DEF = {
 };
 
 export const ENERGY_SOURCES = [
-  { key: 'photo', label: 'Światło', trait: 0, hint: 'Energia ze światła. Wymaga otwartej przestrzeni i minerałów.' },
+  { key: 'chemo', label: 'Źródła chemiczne', trait: 0, hint: 'Energia z wypływu źródła. Trzeba przy nim być — i utrzymać się przy nim.' },
   { key: 'absorb', label: 'Rozpuszczone minerały', trait: 2, hint: 'Pobieranie substancji wprost z otoczenia. Skuteczne w wodzie.' },
   { key: 'digest', label: 'Martwa materia', trait: 1, hint: 'Rozkład szczątków. Wymaga miejsc, gdzie coś już umarło.' },
 ];
@@ -33,7 +33,7 @@ export function designCost(design) {
 }
 
 export function defaultDesign() {
-  const d = { source: 'photo' };
+  const d = { source: 'chemo' };
   for (const [k, v] of Object.entries(CELL_DESIGN_DEF)) d[k] = v.def;
   return d;
 }
@@ -85,9 +85,9 @@ export function genomeFromDesign(design, hue = 120) {
   // potencjał obecny od pierwszej chwili — nie zachowanie, tylko możliwość.
   //
   // Bez nich niektóre drogi ewolucji były zamknięte nie przez dobór, lecz przez
-  // sam zapis genomu. Zmiana źródła energii z fotosyntezy na trawienie wymaga
+  // sam zapis genomu. Zmiana źródła energii z chemosyntezy na trawienie wymaga
   // jednej małej mutacji, bo te zdolności leżą obok siebie na liście cech;
-  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty fotosyntezy
+  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty chemosyntezy
   // po drodze. W pomiarze na 2047 urodzonych organizmach tkanka kurczliwa
   // pojawiła się cztery razy, a ani razu w ciele wielokomórkowym — czyli mięsień
   // nie powstał nigdy. Osobny wyciszony gen daje tej ścieżce taki sam dostęp,

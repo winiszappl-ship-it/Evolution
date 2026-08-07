@@ -5,6 +5,7 @@ import { Organism } from '../src/bio/organism.js';
 import { defaultDesign } from '../src/bio/seed.js';
 import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 import { TICKS_PER_YEAR } from '../src/world/climate.js';
+import { findSeedSpot } from '../src/bio/seedspot.js';
 
 const years = parseFloat(process.argv[2] || '10');
 let failures = 0;
@@ -83,23 +84,26 @@ big._sector = sim.world.sectorOf(cx, cy);
 if (big.body.cellCount >= 3) {
   const pos = { x: 0, y: 0 };
   big.cellWorldPos(0, pos);
-  const capBefore = big.body.cap.photo;
+  const capBefore = big.body.cap.chemo;
   for (let t = 0; t < 40 && big.cellsAlive === big.body.cellCount; t++) big.hurtAt(pos.x, pos.y, 0.2);
   if (big._capDirty) big.recomputeCap();
   check(big.alive && big.cellsAlive < big.body.cellCount,
     'ciało przeżywa utratę części komórek',
     `zostało ${big.cellsAlive} z ${big.body.cellCount}`);
-  check(big.body.cap.photo < capBefore,
+  check(big.body.cap.chemo < capBefore,
     'martwa komórka przestaje pracować na rzecz organizmu',
-    `fotosynteza ${capBefore.toFixed(2)} → ${big.body.cap.photo.toFixed(2)}`);
+    `chemosynteza ${capBefore.toFixed(2)} → ${big.body.cap.chemo.toFixed(2)}`);
 } else {
   console.log('  (ciało testowe za małe — pomijam sprawdzenie utraty komórek)');
 }
 
 // ------------------------------------------------- czy w żywym świecie ktoś walczy
 const world = new Simulation({ ...DEFAULT_PARAMS, seed: 'test-alpha', size: 'small' });
-world.seed(defaultDesign(), world.world.widthUnits / 2, world.world.heightUnits / 2);
-world.setFocus(world.world.widthUnits / 2, world.world.heightUnits / 2, 700, 3);
+// Zasiew idzie tam, gdzie da się żyć. Środek mapy przestał być takim miejscem,
+// gdy energia przestała padać z nieba i zaczęła wypływać z konkretnych punktów.
+const wspot = findSeedSpot(world.world, world.climate, world.rng, 'chemo');
+world.seed(defaultDesign(), wspot.x, wspot.y);
+world.setFocus(wspot.x, wspot.y, 700, 3);
 const causes = {};
 for (let t = 0; t < Math.round(years * TICKS_PER_YEAR); t++) {
   const before = new Map(world.organisms.map(o => [o.id, o]));

@@ -22,7 +22,7 @@ let water = 0;
 const biomes = {};
 for (let s = 0; s < worlds; s++) {
   const sim = new Simulation({ ...DEFAULT_PARAMS, seed: 'start-' + s, size: 'small' });
-  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'photo');
+  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'chemo');
   const i = sim.world.tileOf(spot.x, spot.y);
   if (sim.world.isWaterAt(i)) water++;
   const b = sim.world.biomeDefAt(i).name;
@@ -45,7 +45,7 @@ let aliveTot = 0, aliveMuscle = 0, aliveSensor = 0, aliveMoving = 0;
 
 for (let s = 0; s < census; s++) {
   const sim = new Simulation({ ...DEFAULT_PARAMS, seed: 'ruch-' + s, size: 'small' });
-  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'photo');
+  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'chemo');
   sim.seed(defaultDesign(), spot.x, spot.y);
   sim.setFocus(spot.x, spot.y, 700, 3);
 

@@ -75,7 +75,7 @@ export class Screens {
           slider('Temperatura', p.temperature, -25, 45, 1, 'Średnia globalna. Skrajności ograniczają, gdzie życie w ogóle da radę.', v => { p.temperature = v; refresh(); }, v => `${v}°C`),
           slider('Wilgotność', p.humidity, 0, 1, 0.01, 'Wpływa na lasy, bagna i pustynie.', v => { p.humidity = v; refresh(); }, v => `${Math.round(v * 100)}%`),
           slider('Ilość wody', p.water, 0.05, 0.92, 0.01, 'Ile powierzchni pokrywają oceany.', v => { p.water = v; refresh(); }, v => `${Math.round(v * 100)}%`),
-          slider('Ilość światła', p.light, 0.15, 2.2, 0.05, 'Jasność gwiazdy. Napędza fotosyntezę.', v => { p.light = v; }, v => `${v.toFixed(2)}×`)),
+          slider('Ilość światła', p.light, 0.15, 2.2, 0.05, 'Jasność gwiazdy. Grzeje i pozwala widzieć — energii już nie daje.', v => { p.light = v; }, v => `${v.toFixed(2)}×`)),
         el('div', {},
           preview, info,
           slider('Poziom tlenu', p.oxygen, 0.01, 0.6, 0.01, 'Wysoki tlen przyspiesza metabolizm.', v => { p.oxygen = v; }, v => `${Math.round(v * 100)}%`),

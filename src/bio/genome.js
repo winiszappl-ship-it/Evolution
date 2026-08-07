@@ -15,9 +15,9 @@ import { clamp } from '../core/util.js';
 export const MORPHOGENS = 5;
 
 // Zdolności komórki. To są własności fizyczne, nie role ekologiczne.
-export const TRAITS = ['photo', 'digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
+export const TRAITS = ['chemo', 'digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
 export const TRAIT_LABEL = {
-  photo: 'fotosynteza', digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
+  chemo: 'chemosynteza', digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
   rigid: 'sztywność', sense: 'receptory', neuro: 'neurony', store: 'magazyn',
   armor: 'pancerz', repro: 'rozrodczość',
 };

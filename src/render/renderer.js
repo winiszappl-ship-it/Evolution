@@ -1,5 +1,6 @@
 import { BIOME_DEF } from '../world/biomes.js';
 import { TILE, SECTOR_TILES } from '../world/world.js';
+import { VENT_RANGE } from '../world/vents.js';
 import { clamp, hsl, TAU } from '../core/util.js';
 import { TRAITS } from '../bio/genome.js';
 
@@ -12,7 +13,7 @@ const MAX_FOOD_SPRITES = 900;
 export const OVERLAYS = [
   { key: 'none', name: 'Bez nakładki' },
   { key: 'temp', name: 'Temperatura' },
-  { key: 'light', name: 'Światło' },
+  { key: 'chem', name: 'Źródła chemiczne' },
   { key: 'nutrient', name: 'Minerały' },
   { key: 'detritus', name: 'Materia rozpuszczona' },
   { key: 'food', name: 'Pokarm stały' },
@@ -91,6 +92,7 @@ export class Renderer {
     ctx.drawImage(this.terrainCanvas, sx, sy, sw, sh, 0, 0, W, H);
 
     this.drawOverlay(ctx, sx, sy, sw, sh, W, H);
+    this.drawVents(ctx);
     this.drawFood(ctx);
     this.drawOrganisms(ctx);
     this.drawWeather(ctx, W, H);
@@ -123,9 +125,9 @@ export class Renderer {
             [r, g, bl] = hslToRgb((1 - t) * 0.66, 0.85, 0.5);
             break;
           }
-          case 'light': {
-            const l = clamp(w.lightAt(i, sim.climate), 0, 1.5) / 1.5;
-            [r, g, bl] = hslToRgb(0.14, 0.9, clamp(l, 0.02, 0.85));
+          case 'chem': {
+            const c = clamp(w.chemTile[i] / 1.2, 0, 1);
+            [r, g, bl] = hslToRgb(0.42, 0.95, clamp(c, 0.02, 0.85));
             break;
           }
           case 'nutrient': {
@@ -166,6 +168,37 @@ export class Renderer {
 
     if (this.overlay === 'sectors') this.drawSectorGrid(ctx);
     if (this.overlay === 'species') this.drawSpeciesRanges(ctx);
+  }
+
+  /**
+   * Źródła chemiczne. Rysujemy je zawsze i przy każdym przybliżeniu, bo od
+   * nich zależy wszystko: to jedyne miejsca, w których energia wchodzi do
+   * tego świata. Gracz, który ich nie widzi, nie rozumie, dokąd idzie życie.
+   */
+  drawVents(ctx) {
+    const cam = this.camera;
+    const b = cam.viewBounds();
+    const z = cam.zoom;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const v of this.sim.world.vents.vents) {
+      if (v.x < b.x0 - VENT_RANGE || v.x > b.x1 + VENT_RANGE
+        || v.y < b.y0 - VENT_RANGE || v.y > b.y1 + VENT_RANGE) continue;
+      const p = cam.worldToScreen(v.x, v.y);
+      const rr = VENT_RANGE * z;
+      const pulse = 0.75 + Math.sin(this.time * 1.6 + v.x * 0.01) * 0.25;
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, Math.max(6, rr));
+      g.addColorStop(0, `rgba(120,255,190,${0.5 * pulse * v.rate})`);
+      g.addColorStop(0.25, `rgba(60,220,255,${0.16 * pulse})`);
+      g.addColorStop(1, 'rgba(0,80,120,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(p.x - rr, p.y - rr, rr * 2, rr * 2);
+      // sam komin — żeby przy oddaleniu został choć punkt
+      ctx.fillStyle = `rgba(190,255,225,${0.85 * pulse})`;
+      const s = Math.max(2.5, 3 * z);
+      ctx.beginPath(); ctx.arc(p.x, p.y, s, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
   }
 
   /** Zbiera okruchy w gęstość na kafel — inaczej przy oddaleniu byłyby niewidoczne. */

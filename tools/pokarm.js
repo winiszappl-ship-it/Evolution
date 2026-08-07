@@ -4,6 +4,7 @@ import { defaultDesign } from '../src/bio/seed.js';
 import { DEFAULT_PARAMS } from '../src/world/worldgen.js';
 import { TICKS_PER_YEAR } from '../src/world/climate.js';
 import { FOOD_PLANT, FOOD_REMAINS } from '../src/world/food.js';
+import { findSeedSpot } from '../src/bio/seedspot.js';
 
 const years = parseFloat(process.argv[2] || '10');
 let failures = 0;
@@ -48,7 +49,8 @@ check(gotFar === 0 && gotNear > 0,
   `z 40 jednostek: ${gotFar}, z bliska: ${gotNear.toFixed(1)}`);
 
 // ---------------------------------------------------------------- dobór
-const spot = { x: sim.world.widthUnits / 2, y: sim.world.heightUnits / 2 };
+// Tam, gdzie da się żyć — energia wypływa ze źródeł, nie pada wszędzie.
+const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'chemo');
 sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 700, 3);
 const ticks = Math.round(years * TICKS_PER_YEAR);

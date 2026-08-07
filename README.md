@@ -100,14 +100,38 @@ Mutacje obejmują zmianę wartości, delecję genu, insercję, duplikację fragm
 inwersję kolejności i rzadką duplikację całego genomu. Tempo mutacji jest
 zapisane w samym DNA i również podlega doborowi.
 
+### Energia wchodzi do świata tylko w konkretnych punktach
+
+Nie ma fotosyntezy. Jedynym dopływem energii są **źródła chemiczne**: kominy
+tam, gdzie skorupa jest cienka, i wysięki mineralne w górach. Rozmieszcza je
+geologia, nie wygoda życia, i przez cały czas trwania świata stoją w miejscu.
+
+Powód tej zmiany jest jeden. Światło padało wszędzie, więc stanie w miejscu
+było opłacalne i nic nigdy nie zmuszało życia do ruchu — na 2047 urodzonych
+organizmów w populacji żywej nie było ani jednego mięśnia. Źródło jest punktem:
+kto chce z niego żyć, musi przy nim być. Kto odpłynie, ginie.
+
+Źródło wynosi ze skorupy nie tylko energię, ale i minerały — to ten sam
+wypływ. Bez tego kolonia zdzierała kafel z minerałów szybciej, niż skała
+wietrzeje, i ginęła z głodu budulcowego mimo energii tuż obok.
+
+Wydajność źródła jest skończona i dzielona po równo między wszystkich, którzy
+przy nim są. Przy pełnym źródle opłaca się poszukać następnego — i to jest
+drugi powód, dla którego ruch ma wartość.
+
+Skutek zmiany, mierzony na tych samych sześciu światach po 10 latach: mięśnie
+pojawiły się w populacji żywej (wcześniej 0,00 w każdym świecie), w ruchu jest
+25–307 osobników, a śmierć z cudzej ręki wzrosła z 0,06% do 13,74% — bo przy
+źródle robi się ciasno i organizmy zaczynają na siebie wpadać.
+
 ### Komórka ma zdolności, nie rolę
 
-Komórka może rozwinąć dziesięć fizycznych zdolności: fotosyntezę, trawienie,
+Komórka może rozwinąć dziesięć fizycznych zdolności: chemosyntezę, trawienie,
 wchłanianie, kurczliwość, sztywność, receptory, przewodzenie sygnału, magazyn
 energii, pancerz i rozrodczość. Każda coś kosztuje w każdym takcie.
 
 Nigdzie w kodzie nie ma pojęcia rośliny, roślinożercy ani drapieżnika.
-Organizm, który zdobywa energię ze światła, jest opisywany jako fotosyntetyk
+Organizm, który zdobywa energię ze źródła, jest opisywany jako chemosyntetyk
 dopiero po fakcie — na podstawie tego, skąd faktycznie wzięła się jego energia.
 Ten sam organizm może w kolejnym pokoleniu żywić się padliną, jeśli mutacja
 przestawi jego komórki na trawienie.
@@ -131,7 +155,7 @@ zjadaniu zapisuje też, czym żywiła się ofiara. Stąd biorą się etykiety:
 
 | etykieta | co znaczy |
 |---|---|
-| producent | większość energii ze światła lub z materii rozpuszczonej |
+| producent | większość energii ze źródła chemicznego lub z materii rozpuszczonej |
 | roślinożerca | żywi się materią wydaloną przez producentów |
 | padlinożerca | żywi się szczątkami po martwych ciałach |
 | konsument pierwszego rzędu | zjada żywych producentów |
@@ -159,7 +183,7 @@ akurat była w miejscu styku. Z tego wynika reszta:
 - twarda tkanka **kaleczy tego, kto ją gryzie**; bez tego pancerz jedynie
   spowalniałby jedzenie i nigdy nie powstałby wyścig zbrojeń
 - ciało przeżywa utratę części komórek, ale martwa komórka przestaje pracować:
-  organizm traci tyle fotosyntezy, magazynu czy siły, ile zginęło tkanki
+  organizm traci tyle chemosyntezy, magazynu czy siły, ile zginęło tkanki
 - kto się wgryzł, trzyma. Bez tego odepchnięcie rozdzielałoby ciała po jednym
   musnięciu i żadne starcie nie mogłoby się skończyć śmiercią
 - większego od siebie nie da się objąć, więc rozmiar sam w sobie jest obroną
@@ -278,7 +302,7 @@ To jedyny powód, dla którego opłaca się rosnąć, i jedyne, czego potrzeba, 
 z jednokomórkowców zaczęły powstawać większe formy.
 
 Obieg materii jest zamknięty. Martwe organizmy stają się detrytusem, detrytus
-rozkłada się na minerały, minerały wracają do fotosyntezy. Wymieranie w jednym
+rozkłada się na minerały, minerały wracają do chemosyntezy. Wymieranie w jednym
 miejscu użyźnia glebę w innym.
 
 ### Nie ma katastrof
@@ -343,7 +367,7 @@ organizm, który musi sobie w niej poradzić sam.
 index.html, styles.css     interfejs
 assets/                    grafika (dwa rodzaje okruchów pokarmu)
 src/core/                  generator liczb losowych, szum, magistrala zdarzeń
-src/world/                 teren, biomy, klimat, chemia kafli, okruchy pokarmu
+src/world/                 teren, biomy, klimat, chemia kafli, źródła, okruchy pokarmu
 src/bio/                   DNA, mutacje, morfogeneza, układ nerwowy, organizm,
                            gatunki, projekt pierwszej komórki
 src/sim/                   pętla symulacji, kronika, osiągnięcia

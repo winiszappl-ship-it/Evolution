@@ -313,7 +313,7 @@ function finalize(genome, cells, bonds, build) {
   const P = genome.params;
   let mass = 0, area = 0, upkeep = 0, radius = 0;
   const cap = {
-    photo: 0, digest: 0, absorb: 0, contract: 0, rigid: 0,
+    chemo: 0, digest: 0, absorb: 0, contract: 0, rigid: 0,
     sense: 0, neuro: 0, store: 0, armor: 0, repro: 0,
   };
   const keys = Object.keys(cap);
