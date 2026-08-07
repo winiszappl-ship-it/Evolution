@@ -1,0 +1,54 @@
+# Wdrożenie na GitHub Pages.
+#
+# Domyślnie Pages buduje stronę ukrytym zadaniem „pages-build-deployment",
+# którego logów nie da się pobrać. Gdy przestaje działać — a przestało —
+# nie widać ani powodu, ani miejsca awarii. Ten plik robi to samo jawnie:
+# każdy krok ma log, każda porażka ma komunikat.
+#
+# Strona jest statyczna. Nie ma budowania, nie ma zależności, nie ma kroku
+# instalacji — do wysłania idzie repozytorium takie, jakie jest.
+#
+# Żeby to zadziałało, w Settings → Pages → Build and deployment → Source
+# musi stać „GitHub Actions" zamiast „Deploy from a branch".
+name: pages
+
+on:
+  push:
+    branches:
+      - claude/evolution-simulator-z1supg
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Jedno wdrożenie naraz. Nowszy push nie przerywa trwającego wdrożenia,
+# tylko czeka — inaczej strona potrafi zostać w połowie starej wersji.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sprawdź, czy jest co serwować
+        run: |
+          test -f index.html || { echo "brak index.html"; exit 1; }
+          test -f .nojekyll || { echo "brak .nojekyll — Jekyll zje katalogi"; exit 1; }
+          echo "modułów: $(find src -name '*.js' | wc -l), grafik: $(ls assets | wc -l)"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
