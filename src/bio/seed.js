@@ -17,9 +17,8 @@ export const CELL_DESIGN_DEF = {
 };
 
 export const ENERGY_SOURCES = [
-  { key: 'chemo', label: 'Źródła chemiczne', trait: 0, hint: 'Energia z wypływu źródła. Trzeba przy nim być — i utrzymać się przy nim.' },
-  { key: 'absorb', label: 'Rozpuszczone minerały', trait: 2, hint: 'Pobieranie substancji wprost z otoczenia. Skuteczne w wodzie.' },
-  { key: 'digest', label: 'Martwa materia', trait: 1, hint: 'Rozkład szczątków. Wymaga miejsc, gdzie coś już umarło.' },
+  { key: 'absorb', label: 'Materia rozpuszczona', trait: 1, hint: 'Pobieranie substancji wprost z otoczenia. Skuteczne w wodzie.' },
+  { key: 'digest', label: 'Martwa materia', trait: 0, hint: 'Rozkład szczątków. Wymaga miejsc, gdzie coś już umarło.' },
 ];
 
 export const DESIGN_BUDGET = 34;
@@ -33,7 +32,7 @@ export function designCost(design) {
 }
 
 export function defaultDesign() {
-  const d = { source: 'chemo' };
+  const d = { source: 'absorb' };
   for (const [k, v] of Object.entries(CELL_DESIGN_DEF)) d[k] = v.def;
   return d;
 }
@@ -57,7 +56,6 @@ export function genomeFromDesign(design, hue = 120) {
   g.params.reproThr = clamp(4.2 - v('division') * 3.0, 0.8, 12);
   g.params.mutRate = clamp(0.012 + v('mutation') * 0.22, 0.001, 0.9);
   g.params.devSteps = 1;
-  g.params.lifespan = clamp(900 + v('storage') * 2600 + v('membrane') * 1400, 150, 200000);
   g.params.cellCost = clamp(0.6 + v('size') * 1.0, 0.4, 2.4);
   g.params.hue = hue;
   g.params.invest = 0.45;
@@ -72,22 +70,22 @@ export function genomeFromDesign(design, hue = 120) {
   g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (src.trait + 0.5) / TRAITS.length, 0.95, 0, 1));
   // magazyn
   if (v('storage') > 0.05) {
-    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (7 + 0.5) / TRAITS.length, clamp(v('storage') * 1.1, 0, 1), 0, 1));
+    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (6 + 0.5) / TRAITS.length, clamp(v('storage') * 1.1, 0, 1), 0, 1));
   }
   // odporność
   if (v('resistance') > 0.05) {
-    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (8 + 0.5) / TRAITS.length, clamp(v('resistance') * 1.1, 0, 1), 0, 1));
+    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (7 + 0.5) / TRAITS.length, clamp(v('resistance') * 1.1, 0, 1), 0, 1));
   }
   // komórka rozrodcza
-  g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (9 + 0.5) / TRAITS.length, 0.4, 0, 1));
+  g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (8 + 0.5) / TRAITS.length, 0.4, 0, 1));
 
   // Geny wyciszone: nic nie robią, dopóki mutacja nie obniży progu. To ukryty
   // potencjał obecny od pierwszej chwili — nie zachowanie, tylko możliwość.
   //
   // Bez nich niektóre drogi ewolucji były zamknięte nie przez dobór, lecz przez
-  // sam zapis genomu. Zmiana źródła energii z chemosyntezy na trawienie wymaga
+  // sam zapis genomu. Zmiana źródła energii z wchłaniania na trawienie wymaga
   // jednej małej mutacji, bo te zdolności leżą obok siebie na liście cech;
-  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty chemosyntezy
+  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty wchłaniania
   // po drodze. W pomiarze na 2047 urodzonych organizmach tkanka kurczliwa
   // pojawiła się cztery razy, a ani razu w ciele wielokomórkowym — czyli mięsień
   // nie powstał nigdy. Osobny wyciszony gen daje tej ścieżce taki sam dostęp,
@@ -95,9 +93,9 @@ export function genomeFromDesign(design, hue = 120) {
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.DIVIDE, 0.25, 0, 0, 1));
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.EMIT, 0.1, 0.8, 0, 1));
   // kurczliwość — bez niej wiązanie między komórkami nigdy nie stanie się mięśniem
-  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (3 + 0.5) / TRAITS.length, 0.8, 0, 1));
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (2 + 0.5) / TRAITS.length, 0.8, 0, 1));
   // receptory — bez nich organizm nie ma czym odczytać gradientu pokarmu
-  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (5 + 0.5) / TRAITS.length, 0.7, 0.2, 1));
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (4 + 0.5) / TRAITS.length, 0.7, 0.2, 1));
 
   return g;
 }

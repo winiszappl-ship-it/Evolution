@@ -93,8 +93,8 @@ export function develop(genome, budget = Infinity) {
     const A = live[b.a], B = live[b.b];
     const dx = A.x - B.x, dy = A.y - B.y;
     b.rest = Math.max(0.4, Math.hypot(dx, dy));
-    b.stiff = clamp(0.22 + (A.t[4] + B.t[4]) * 0.55 + (A.stiff + B.stiff) * 0.5, 0.05, 2.4);
-    b.muscle = Math.max(A.t[3], B.t[3]);
+    b.stiff = clamp(0.22 + (A.t[3] + B.t[3]) * 0.55 + (A.stiff + B.stiff) * 0.5, 0.05, 2.4);
+    b.muscle = Math.max(A.t[2], B.t[2]);
     b.phase = ((A.m[1] + B.m[2]) % 1 + 1) % 1 * TAU;
     b.cellA = b.a; b.cellB = b.b;
   }
@@ -313,7 +313,7 @@ function finalize(genome, cells, bonds, build) {
   const P = genome.params;
   let mass = 0, area = 0, upkeep = 0, radius = 0;
   const cap = {
-    chemo: 0, digest: 0, absorb: 0, contract: 0, rigid: 0,
+    digest: 0, absorb: 0, contract: 0, rigid: 0,
     sense: 0, neuro: 0, store: 0, armor: 0, repro: 0,
   };
   const keys = Object.keys(cap);
@@ -321,7 +321,7 @@ function finalize(genome, cells, bonds, build) {
   for (const c of cells) {
     const a = Math.PI * c.r * c.r;
     area += a;
-    mass += a * P.cellCost * (1 + c.t[4] * 0.8 + c.t[8] * 1.1);
+    mass += a * P.cellCost * (1 + c.t[3] * 0.8 + c.t[7] * 1.1);
     let u = 0.011;
     for (let i = 0; i < TRAIT_COUNT; i++) {
       u += c.t[i] * TRAIT_UPKEEP[i];
@@ -347,7 +347,7 @@ function finalize(genome, cells, bonds, build) {
     upkeep, buildCost, storage,
     cap,
     muscleCount: bonds.filter(b => b.muscle > 0.12).length,
-    neuronCount: cells.filter(c => c.t[6] > 0.15).length,
-    senseCount: cells.filter(c => c.t[5] > 0.1).length,
+    neuronCount: cells.filter(c => c.t[5] > 0.15).length,
+    senseCount: cells.filter(c => c.t[4] > 0.1).length,
   };
 }

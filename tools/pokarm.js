@@ -49,8 +49,8 @@ check(gotFar === 0 && gotNear > 0,
   `z 40 jednostek: ${gotFar}, z bliska: ${gotNear.toFixed(1)}`);
 
 // ---------------------------------------------------------------- dobór
-// Tam, gdzie da się żyć — energia wypływa ze źródeł, nie pada wszędzie.
-const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'chemo');
+// Tam, gdzie da się żyć — czyli tam, gdzie leży materia po czymś, co umarło.
+const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'absorb');
 sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 700, 3);
 const ticks = Math.round(years * TICKS_PER_YEAR);

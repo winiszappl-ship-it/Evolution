@@ -15,16 +15,16 @@ import { clamp } from '../core/util.js';
 export const MORPHOGENS = 5;
 
 // Zdolności komórki. To są własności fizyczne, nie role ekologiczne.
-export const TRAITS = ['chemo', 'digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
+export const TRAITS = ['digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
 export const TRAIT_LABEL = {
-  chemo: 'chemosynteza', digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
+  digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
   rigid: 'sztywność', sense: 'receptory', neuro: 'neurony', store: 'magazyn',
   armor: 'pancerz', repro: 'rozrodczość',
 };
 export const TRAIT_COUNT = TRAITS.length;
 
 // Koszt utrzymania jednostki danej zdolności (energia / takt / komórkę)
-export const TRAIT_UPKEEP = [0.010, 0.020, 0.008, 0.022, 0.006, 0.014, 0.030, 0.005, 0.012, 0.016];
+export const TRAIT_UPKEEP = [0.020, 0.008, 0.022, 0.006, 0.014, 0.030, 0.005, 0.012, 0.016];
 
 export const ACT = {
   DIVIDE: 0,      // podział komórki pod zadanym kątem
@@ -53,7 +53,6 @@ export const PARAM_DEF = {
   devSteps:   [6, 1, 40, 1.2],            // liczba kroków rozwoju zarodkowego
   reproThr:   [1.8, 0.6, 12, 0.35],       // krotność kosztu ciała potrzebna do rozmnożenia
   invest:     [0.42, 0.08, 0.85, 0.06],   // udział energii przekazany potomstwu
-  lifespan:   [2200, 150, 200000, 260],   // maksymalny wiek w taktach
   metabolism: [1.0, 0.25, 3.2, 0.12],     // tempo przemiany materii
   oscFreq:    [0.16, 0.0, 1.4, 0.05],     // częstotliwość neuronów rozrusznikowych
   membrane:   [0.35, 0.02, 2.5, 0.09],    // grubość błony — ochrona kosztem wymiany

@@ -30,9 +30,19 @@ console.log(`\npo ${years} latach: ${sim.organisms.length} organizmów, ${sim.sp
 const origins = {};
 for (const o of sim.organisms) origins[o.origin] = (origins[o.origin] || 0) + 1;
 console.log('pochodzenie:', JSON.stringify(origins));
-check(!Object.keys(origins).some(k => k !== 'parent'),
-  'każdy żyjący organizm powstał z podziału innego',
-  Object.entries(origins).filter(([k]) => k !== 'parent').map(([k, v]) => `${k}:${v}`).join(' ') || 'brak wyjątków');
+// Wyjątkiem jest wyłącznie ręka gracza: zasiana komórka, klon i osobnik
+// wypuszczony z Banku DNA. Dopóki nie zniknęła śmierć ze starości, założyciel
+// i tak umierał w ciągu paru tysięcy taktów, więc to sprawdzenie przechodziło
+// przez przypadek. Teraz założyciel może dożyć końca świata — i ma prawo, bo
+// jego pochodzenie jest znane i zapisane.
+const OUTSIDE = new Set(['player', 'clone']);
+const unexplained = Object.keys(origins).filter(k => k !== 'parent' && !OUTSIDE.has(k));
+check(unexplained.length === 0,
+  'nikt nie ma pochodzenia spoza podziału i ręki gracza',
+  unexplained.join(' ') || 'brak wyjątków');
+check((origins.player || 0) <= 1,
+  'poza podziałem do świata weszła najwyżej ta jedna zasiana komórka',
+  `zasianych żywych: ${origins.player || 0}`);
 
 // --- cała populacja pochodzi od jednego założyciela ---
 const ancestors = new Set(sim.organisms.map(o => o.ancestorId));
@@ -40,8 +50,9 @@ check(ancestors.size === 1 && ancestors.has(founder.id),
   'cała populacja wywodzi się z tej jednej komórki',
   `${ancestors.size} niezależnych linii`);
 
-// --- każdy ma rodzica, którego id jest niższe (rodzic istniał wcześniej) ---
-const badParent = sim.organisms.filter(o => !(o.parentId > 0 && o.parentId < o.id));
+// --- każdy urodzony ma rodzica, którego id jest niższe (rodzic istniał wcześniej) ---
+const badParent = sim.organisms.filter(o => o.origin === 'parent'
+  && !(o.parentId > 0 && o.parentId < o.id));
 check(badParent.length === 0, 'każdy organizm wskazuje wcześniej istniejącego rodzica',
   `${badParent.length} bez poprawnego rodzica`);
 

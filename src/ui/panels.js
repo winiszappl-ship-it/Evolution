@@ -155,7 +155,7 @@ export function organismPanel(o, app) {
     el('h4', { text: 'Stan' }),
     bar(o.energy / (o.maxEnergy || 1), 'var(--accent2)'),
     row('Energia', `${formatNumber(o.energy)} / ${formatNumber(o.maxEnergy)}`),
-    row('Wiek', `${formatNumber(o.age)} / ${formatNumber(o.genome.params.lifespan)} taktów`),
+    row('Wiek', `${formatNumber(o.age)} taktów`),
     row('Integralność', `${Math.round(o.integrity * 100)}%`),
     row('Potomstwo', String(o.offspring)),
     row('Prędkość', o.measuredSpeed.toFixed(3)),
@@ -164,11 +164,11 @@ export function organismPanel(o, app) {
   const dietRows = el('div', { class: 'section' }, el('h4', { text: 'Skąd bierze energię' }));
   dietRows.appendChild(row('Pozycja troficzna', d.trophic || 'nieokreślona'));
   const labels = {
-    chemo: 'źródło chemiczne', absorb: 'materia rozpuszczona', plant: 'materia roślinna',
+    absorb: 'materia rozpuszczona', plant: 'materia roślinna',
     carrion: 'szczątki', predation: 'materia żywa',
   };
   const colors = {
-    chemo: '#6ee7a0', absorb: '#57d6ff', plant: '#e0483a',
+    absorb: '#57d6ff', plant: '#e0483a',
     carrion: '#b03b30', predation: '#ff6b6b',
   };
   if (d.key === 'none') {

@@ -11,8 +11,6 @@ export const DETAIL = { POOL: 0, POINT: 1, FULL: 2 };
 
 const PH_SUBSTEPS = 2;
 const PH_DT = 0.34;
-// ile tkanki utrzyma się z jednego kafla przy źródle, zanim zacznie brakować
-const VENT_BUDGET = 6;
 // tempo pobierania zasobów na jednostkę zdolności tkanki
 export const MINERAL_RATE = 0.135;
 export const ABSORB_RATE = 0.055;
@@ -29,11 +27,11 @@ export const REPRO_INTERVAL = TICKS_PER_DAY * 7;
  */
 export function isConsumer(o) {
   const g = o.gain;
-  const auto = g.chemo + g.absorb;
+  const auto = g.absorb;
   const hetero = g.plant + g.carrion + g.predation;
   if (auto + hetero < 1e-6) {
     const cap = o.body.cap;
-    return cap.digest > cap.chemo + cap.absorb;
+    return cap.digest > cap.absorb;
   }
   return hetero > auto;
 }
@@ -52,7 +50,7 @@ export function trophicLabel(g, total) {
   }
   if (g.plant > total * 0.4) return 'roślinożerca';
   if (g.carrion > total * 0.4) return 'padlinożerca';
-  if (g.chemo + g.absorb > total * 0.55) return 'producent';
+  if (g.absorb > total * 0.55) return 'producent';
   return 'wszystkożerca';
 }
 
@@ -96,7 +94,7 @@ export class Organism {
       // Jedynka to tkanka goła: taka, jaka była, zanim uszkodzenia stały się
       // lokalne. Pancerz i sztywność podnoszą wytrzymałość ponad ten poziom,
       // ale nie wolno, żeby brak pancerza oznaczał podwójne obrażenia.
-      this.cellTough[i] = 1 + c.t[8] * 1.8 + c.t[4] * 0.7;
+      this.cellTough[i] = 1 + c.t[7] * 1.8 + c.t[3] * 0.7;
     }
     this.cellsAlive = nc;
     this.integrity = 1;
@@ -123,7 +121,7 @@ export class Organism {
     // `preyProducer` i `preyConsumer` rozdzielają zdobycz według tego, czym
     // ona sama żyła — stąd bierze się pozycja troficzna, mierzona po fakcie.
     this.gain = {
-      chemo: 0, absorb: 0, plant: 0, carrion: 0, predation: 0,
+      absorb: 0, plant: 0, carrion: 0, predation: 0,
       preyProducer: 0, preyConsumer: 0,
     };
     this._foodTake = { plant: 0, carrion: 0 };
@@ -135,8 +133,6 @@ export class Organism {
     this.deathCause = null;
     this.lastReproAge = 0;   // wiek przy ostatnim podziale — odstęp liczy się od niego
 
-    // przewaga w wyścigu o wypływ ze źródła rośnie z zasięgiem ciała, ale nasyca się
-    this.ventEdge = 1 + Math.min(4, this.body.radius * 0.75);
     // pola, nie gettery — czytane w najgorętszej pętli symulacji
     this.radius = this.body.radius;
     this.mass = this.body.mass;
@@ -256,7 +252,7 @@ export class Organism {
       p.px[i] = this.x + cell.x * c - cell.y * s;
       p.py[i] = this.y + cell.x * s + cell.y * c;
       p.vx[i] = this.vx; p.vy[i] = this.vy;
-      p.m[i] = Math.max(0.05, Math.PI * cell.r * cell.r * this.genome.params.cellCost * (1 + cell.t[4] * 0.8));
+      p.m[i] = Math.max(0.05, Math.PI * cell.r * cell.r * this.genome.params.cellCost * (1 + cell.t[3] * 0.8));
       p.hp[i] = 1;
     }
     this.particles = p;
@@ -366,7 +362,7 @@ export class Organism {
         if (traction > 0) {
           // tarcie Coulomba — nieliniowe, więc ruch cykliczny daje przemieszczenie
           const N = p.m[i] * g * 0.5;
-          const mu = traction * (0.35 + cell.t[4] * 0.7 + cell.t[8] * 0.3);
+          const mu = traction * (0.35 + cell.t[3] * 0.7 + cell.t[7] * 0.3);
           const fmax = mu * N;
           const vs = Math.hypot(p.vx[i], p.vy[i]);
           if (vs > 1e-6) {
@@ -443,7 +439,7 @@ export class Organism {
       }
       const ti = world.tileOf(wx, wy);
       switch (s.mod) {
-        case 0: out[i] = world.chemAt(wx, wy) - 0.35; break;
+        case 0: out[i] = world.lightAt(ti, climate) - 0.35; break;
         // Stężenie maleje z odległością od okruchu, więc receptory po dwóch
         // stronach ciała odczytują różne wartości — to jest ten gradient.
         case 1: out[i] = world.food.concentrationAt(wx, wy) * 0.05
@@ -483,26 +479,6 @@ export class Organism {
     const oxyEff = clamp(0.25 + oxy * 3.2, 0.1, 1.3);
 
     let gained = 0;
-
-    // Chemosynteza: energia z wypływu źródła. Źródło jest w konkretnym
-    // miejscu i ma skończoną wydajność, więc trzeba przy nim być i trzeba się
-    // o nie bić. Minerały na budulec nadal pobiera się z podłoża.
-    if (cap.chemo > 0.01) {
-      const chem = world.chemAt(this.x, this.y);
-      const need = cap.chemo * MINERAL_RATE * dt;
-      // gdy minerałów brakuje, brakuje ich wszystkim po równo
-      const load = world.mineralLoad[ti] * dt;
-      const supply = world.nutrient[ti];
-      const fair = load > supply ? supply / load : 1;
-      const minerals = world.takeNutrient(ti, need * fair);
-      // o światło toczy się osobna walka — tę wygrywa większe ciało
-      const own = cap.chemo * this.ventEdge;
-      const others = Math.max(0, world.chemLoad[ti] - own);
-      const share = Math.min(1, this.ventEdge * VENT_BUDGET / (VENT_BUDGET + others));
-      const g = cap.chemo * chem * 1.15 * tempEff * dt * share * (minerals / Math.max(1e-6, need));
-      gained += g; this.gain.chemo += g;
-      world.addOxygen(ti, g * 0.0016);
-    }
 
     // Rozpuszczona materia organiczna: rozlana po całym kaflu, dostępna dla
     // każdego, kto filtruje. Nie trzeba po nią iść, ale i nie ma jej dużo.
@@ -558,9 +534,12 @@ export class Organism {
       this.energy = this.maxEnergy;
     }
 
-    if (this.energy <= 0 || this.integrity <= 0 || this.age > P.lifespan) {
+    // Nie ma śmierci z wieku. Żaden licznik nie odlicza organizmowi czasu —
+    // ginie się z pustego zapasu albo z rozbitego ciała, czyli zawsze z tego,
+    // co się właśnie dzieje, a nie z tego, ile już trwa.
+    if (this.energy <= 0 || this.integrity <= 0) {
       this.alive = false;
-      this.deathCause = this.energy <= 0 ? 'głód' : (this.integrity <= 0 ? 'uszkodzenia' : 'starość');
+      this.deathCause = this.energy <= 0 ? 'głód' : 'uszkodzenia';
     }
   }
 
@@ -609,16 +588,16 @@ export class Organism {
 
   diet() {
     const g = this.gain;
-    const t = g.chemo + g.absorb + g.plant + g.carrion + g.predation;
+    const t = g.absorb + g.plant + g.carrion + g.predation;
     if (t < 1e-6) return { key: 'none', label: 'brak', frac: {}, trophic: 'nieokreślona' };
     const frac = {
-      chemo: g.chemo / t, absorb: g.absorb / t, plant: g.plant / t,
+      absorb: g.absorb / t, plant: g.plant / t,
       carrion: g.carrion / t, predation: g.predation / t,
     };
-    let key = 'chemo', best = -1;
+    let key = 'absorb', best = -1;
     for (const k of Object.keys(frac)) if (frac[k] > best) { best = frac[k]; key = k; }
     const labels = {
-      chemo: 'chemosynteza', absorb: 'osmotrofia', plant: 'materia roślinna',
+      absorb: 'osmotrofia', plant: 'materia roślinna',
       carrion: 'szczątki', predation: 'materia żywa',
     };
     return { key, label: labels[key], frac, mixed: best < 0.6, trophic: trophicLabel(g, t) };

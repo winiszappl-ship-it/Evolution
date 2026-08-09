@@ -3,12 +3,9 @@ import { BIOME_DEF, isWater } from './biomes.js';
 import { clamp } from '../core/util.js';
 import { RNG } from '../core/rng.js';
 import { FoodField, FOOD_PLANT } from './food.js';
-import { VentField } from './vents.js';
 
 export const TILE = 12;            // jednostki świata na kafel
 export const SECTOR_TILES = 16;    // kafle na krawędź sektora
-// ile minerałów wynosi źródło na jednostkę stężenia w takcie
-const VENT_MINERAL = 0.9;
 
 /**
  * Świat: geologia (stała) + chemia i pogoda (zmienne).
@@ -26,7 +23,6 @@ export class World {
     this.oxygen = new Float32Array(n);
     this.nutrientCap = new Float32Array(n);
     this.nutrientCapBase = new Float32Array(n);   // żyzność, do której gleba wraca
-    this.chemLoad = new Float32Array(n);     // ile tkanki żywi się ze źródeł na kaflu
     this.mineralLoad = new Float32Array(n);  // łączne zapotrzebowanie na minerały
     this.detritusLoad = new Float32Array(n); // łączne zapotrzebowanie na materię organiczną
 
@@ -70,16 +66,6 @@ export class World {
     this.heightUnits = this.H * TILE;
     this.rng = new RNG(this.seedNum ^ 0x7a1f);
 
-    // Źródła chemiczne: jedyne wejście energii do tego świata. Rozmieszczone
-    // przez geologię, nieruchome i skończone. Wszystko, co tu kiedykolwiek
-    // urośnie, musi przejść przez któreś z nich.
-    this.vents = new VentField(this, new RNG(this.seedNum ^ 0x3e17));
-    // stężenie w środku każdego kafla — źródła się nie ruszają, więc liczymy raz
-    this.chemTile = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      this.chemTile[i] = this.vents.concentrationAt(
-        (i % this.W) * TILE + TILE / 2, ((i / this.W) | 0) * TILE + TILE / 2);
-    }
 
     // Pokarm stały. Na starcie leży na planecie pierwotna materia organiczna —
     // to jednorazowe wyposażenie świata, nie źródło, które produkuje bez końca.
@@ -130,16 +116,7 @@ export class World {
   biomeDefAt(i) { return BIOME_DEF[this.biome[i]]; }
   isWaterAt(i) { return BIOME_DEF[this.biome[i]].water; }
 
-  /**
-   * Stężenie związków ze źródeł chemicznych w punkcie świata. To jedyne
-   * wejście energii do tego świata — i w odróżnieniu od dawnego światła
-   * nie ma go wszędzie, tylko w konkretnych miejscach.
-   */
-  chemAt(x, y) {
-    return this.vents.concentrationAt(x, y);
-  }
-
-  /** Światło. Nie karmi już niczego — grzeje i pozwala widzieć. */
+  /** Światło. Nie karmi niczego — grzeje i pozwala widzieć. */
   lightAt(i, climate) {
     const b = BIOME_DEF[this.biome[i]];
     const ty = (i / this.W) | 0;
@@ -231,15 +208,6 @@ export class World {
         const relax = 1 - Math.exp(-0.0008 * steps);
         this.nutrient[i] += (cap - this.nutrient[i]) * relax * (this.nutrient[i] < cap ? 1 : 0.25);
 
-        // Źródło wynosi ze skorupy nie tylko energię, ale i minerały — to ten
-        // sam wypływ. Bez tego kolonia przy kominie zdzierałaby kafel z minerałów
-        // szybciej, niż skała wietrzeje, i ginęła z głodu budulcowego mimo
-        // energii tuż obok. Pomiar: przy 49 osobnikach zysk spadał do 0,005 na
-        // takt wobec utrzymania 0,05, a świat wymierał w 4 przypadkach na 6.
-        const chem = this.chemTile[i];
-        if (chem > 0.001) {
-          this.nutrient[i] = Math.min(cap * 2.2, this.nutrient[i] + chem * VENT_MINERAL * steps);
-        }
 
         // tlen relaksuje do wartości atmosferycznej biomu
         const oTarget = this.globalOxygen * b.oxyMul;

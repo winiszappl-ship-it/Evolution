@@ -18,7 +18,7 @@ let survived = 0;
 for (let s = 0; s < count; s++) {
   const seed = 'proba-' + s;
   const sim = new Simulation({ ...DEFAULT_PARAMS, seed, size: 'small' });
-  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'chemo');
+  const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'absorb');
   sim.seed(defaultDesign(), spot.x, spot.y);
   sim.setFocus(spot.x, spot.y, 700, 3);
   for (let t = 0; t < ticks; t++) sim.step(1);

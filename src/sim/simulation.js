@@ -334,7 +334,7 @@ export class Simulation {
     for (const s of world.sectors) { s.organisms.length = 0; s.activity = s.activity * 0.98; }
     if (!this._loadTiles) this._loadTiles = [];
     for (const ti of this._loadTiles) {
-      world.chemLoad[ti] = 0; world.mineralLoad[ti] = 0; world.detritusLoad[ti] = 0;
+      world.mineralLoad[ti] = 0; world.detritusLoad[ti] = 0;
     }
     this._loadTiles.length = 0;
 
@@ -350,13 +350,9 @@ export class Simulation {
       const cap = o.body.cap;
       const ti = world.tileOf(o.x, o.y);
       o._tile = ti;
-      if (world.chemLoad[ti] === 0 && world.mineralLoad[ti] === 0 && world.detritusLoad[ti] === 0) {
+      if (world.mineralLoad[ti] === 0 && world.detritusLoad[ti] === 0) {
         this._loadTiles.push(ti);
       }
-      // Wypływ ze źródła jest skończony. Większe ciało przechwytuje większą
-      // jego część — to jedyny powód, dla którego opłaca się rosnąć.
-      world.chemLoad[ti] += cap.chemo * o.ventEdge;
-      world.mineralLoad[ti] += cap.chemo * MINERAL_RATE;
       world.detritusLoad[ti] += cap.absorb * ABSORB_RATE + cap.digest * DIGEST_RATE;
     }
   }
@@ -543,7 +539,7 @@ export class Simulation {
     // tylko spowalniałby jedzenie i nigdy nie powstałby wyścig zbrojeń.
     if (hit > 0 && b._lastHit >= 0) {
       const cell = b.body.cells[b._lastHit];
-      const spite = hit * (cell.t[8] * 0.55 + cell.t[4] * 0.3);
+      const spite = hit * (cell.t[7] * 0.55 + cell.t[3] * 0.3);
       if (spite > 1e-4) a.hurtAt(cx, cy, spite);
     }
 
