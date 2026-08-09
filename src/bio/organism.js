@@ -12,6 +12,15 @@ export const DETAIL = { POOL: 0, POINT: 1, FULL: 2 };
 const PH_SUBSTEPS = 2;
 const PH_DT = 0.34;
 // tempo pobierania zasobów na jednostkę zdolności tkanki
+// Litotrofia: energia wprost z minerałów w podłożu. To jedyna produkcja
+// pierwotna w tym świecie i jedyny dopływ, którego nie trzeba nikomu odebrać —
+// minerały odnawiają się same, przez wietrzenie skał. Odnawiają się jednak
+// wolno, więc kafel wyżywi niewielu, a nadmiar sąsiadów głodzi wszystkich.
+export const LITHO_RATE = 0.34;
+// Ile energii daje jednostka minerału. Minerał jest paliwem ubogim — trzeba go
+// dużo — ale wietrzenie skał oddaje kaflowi tylko ułamek jednostki na takt,
+// więc to ta liczba rozstrzyga, czy kafel wyżywi kogokolwiek ponad jednego.
+export const LITHO_YIELD = 1.15;
 export const MINERAL_RATE = 0.135;
 export const ABSORB_RATE = 0.055;
 // Trawienie okruchu jest szybkie i wydajne — kto znajdzie ciało, ma z niego
@@ -27,11 +36,11 @@ export const REPRO_INTERVAL = TICKS_PER_DAY * 7;
  */
 export function isConsumer(o) {
   const g = o.gain;
-  const auto = g.absorb;
+  const auto = g.litho + g.absorb;
   const hetero = g.plant + g.carrion + g.predation;
   if (auto + hetero < 1e-6) {
     const cap = o.body.cap;
-    return cap.digest > cap.absorb;
+    return cap.digest > cap.litho + cap.absorb;
   }
   return hetero > auto;
 }
@@ -50,7 +59,7 @@ export function trophicLabel(g, total) {
   }
   if (g.plant > total * 0.4) return 'roślinożerca';
   if (g.carrion > total * 0.4) return 'padlinożerca';
-  if (g.absorb > total * 0.55) return 'producent';
+  if (g.litho + g.absorb > total * 0.55) return 'producent';
   return 'wszystkożerca';
 }
 
@@ -94,7 +103,7 @@ export class Organism {
       // Jedynka to tkanka goła: taka, jaka była, zanim uszkodzenia stały się
       // lokalne. Pancerz i sztywność podnoszą wytrzymałość ponad ten poziom,
       // ale nie wolno, żeby brak pancerza oznaczał podwójne obrażenia.
-      this.cellTough[i] = 1 + c.t[7] * 1.8 + c.t[3] * 0.7;
+      this.cellTough[i] = 1 + c.t[8] * 1.8 + c.t[4] * 0.7;
     }
     this.cellsAlive = nc;
     this.integrity = 1;
@@ -121,7 +130,7 @@ export class Organism {
     // `preyProducer` i `preyConsumer` rozdzielają zdobycz według tego, czym
     // ona sama żyła — stąd bierze się pozycja troficzna, mierzona po fakcie.
     this.gain = {
-      absorb: 0, plant: 0, carrion: 0, predation: 0,
+      litho: 0, absorb: 0, plant: 0, carrion: 0, predation: 0,
       preyProducer: 0, preyConsumer: 0,
     };
     this._foodTake = { plant: 0, carrion: 0 };
@@ -252,7 +261,7 @@ export class Organism {
       p.px[i] = this.x + cell.x * c - cell.y * s;
       p.py[i] = this.y + cell.x * s + cell.y * c;
       p.vx[i] = this.vx; p.vy[i] = this.vy;
-      p.m[i] = Math.max(0.05, Math.PI * cell.r * cell.r * this.genome.params.cellCost * (1 + cell.t[3] * 0.8));
+      p.m[i] = Math.max(0.05, Math.PI * cell.r * cell.r * this.genome.params.cellCost * (1 + cell.t[4] * 0.8));
       p.hp[i] = 1;
     }
     this.particles = p;
@@ -362,7 +371,7 @@ export class Organism {
         if (traction > 0) {
           // tarcie Coulomba — nieliniowe, więc ruch cykliczny daje przemieszczenie
           const N = p.m[i] * g * 0.5;
-          const mu = traction * (0.35 + cell.t[3] * 0.7 + cell.t[7] * 0.3);
+          const mu = traction * (0.35 + cell.t[4] * 0.7 + cell.t[8] * 0.3);
           const fmax = mu * N;
           const vs = Math.hypot(p.vx[i], p.vy[i]);
           if (vs > 1e-6) {
@@ -480,6 +489,20 @@ export class Organism {
 
     let gained = 0;
 
+    // Litotrofia: kafel oddaje tyle minerałów, ile ma, a ma tyle, ile zdążyło
+    // wywietrzeć ze skały. Zapotrzebowanie wszystkich obecnych liczy się razem
+    // i niedobór dzieli się po równo — kolejność w tablicy niczego nie ustala.
+    if (cap.litho > 0.01) {
+      const want = cap.litho * LITHO_RATE * dt;
+      const load = world.mineralLoad[ti] * dt;
+      const supply = world.nutrient[ti];
+      const fair = load > supply ? supply / load : 1;
+      const got = world.takeNutrient(ti, want * fair);
+      const g = got * LITHO_YIELD * tempEff;
+      gained += g; this.gain.litho += g;
+      world.addOxygen(ti, g * 0.0012);
+    }
+
     // Rozpuszczona materia organiczna: rozlana po całym kaflu, dostępna dla
     // każdego, kto filtruje. Nie trzeba po nią iść, ale i nie ma jej dużo.
     if (cap.absorb > 0.01) {
@@ -588,16 +611,16 @@ export class Organism {
 
   diet() {
     const g = this.gain;
-    const t = g.absorb + g.plant + g.carrion + g.predation;
+    const t = g.litho + g.absorb + g.plant + g.carrion + g.predation;
     if (t < 1e-6) return { key: 'none', label: 'brak', frac: {}, trophic: 'nieokreślona' };
     const frac = {
-      absorb: g.absorb / t, plant: g.plant / t,
+      litho: g.litho / t, absorb: g.absorb / t, plant: g.plant / t,
       carrion: g.carrion / t, predation: g.predation / t,
     };
-    let key = 'absorb', best = -1;
+    let key = 'litho', best = -1;
     for (const k of Object.keys(frac)) if (frac[k] > best) { best = frac[k]; key = k; }
     const labels = {
-      absorb: 'osmotrofia', plant: 'materia roślinna',
+      litho: 'litotrofia', absorb: 'osmotrofia', plant: 'materia roślinna',
       carrion: 'szczątki', predation: 'materia żywa',
     };
     return { key, label: labels[key], frac, mixed: best < 0.6, trophic: trophicLabel(g, t) };

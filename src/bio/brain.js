@@ -26,19 +26,19 @@ export function buildBrain(body, params) {
 
   for (let i = 0; i < cells.length; i++) {
     const c = cells[i];
-    if (c.t[5] > 0.15) {
+    if (c.t[6] > 0.15) {
       neurons.push({
         cell: i,
         bias: clamp(c.w0 * 1.5, -2, 2),
-        tau: clamp(params.memory * (0.4 + c.t[5] * 0.6), 0, 0.97),
+        tau: clamp(params.memory * (0.4 + c.t[6] * 0.6), 0, 0.97),
         oscAmp: clamp(c.m[3], 0, 1.6),
         oscFreq: params.oscFreq * (0.4 + Math.abs(c.m[4]) * 1.2),
         phase: ((c.m[2] % 1) + 1) % 1 * TAU,
         state: 0,
       });
     }
-    if (c.t[4] > 0.1) {
-      sensors.push({ cell: i, mod: c.senseMod, gain: params.senseGain * c.t[4], value: 0 });
+    if (c.t[5] > 0.1) {
+      sensors.push({ cell: i, mod: c.senseMod, gain: params.senseGain * c.t[5], value: 0 });
     }
   }
 
@@ -49,7 +49,7 @@ export function buildBrain(body, params) {
 
   const reach = (i) => {
     const c = cells[i];
-    return Math.max(1.6, c.axon > 0 ? c.axon : 1.6 + c.t[5] * 3.2);
+    return Math.max(1.6, c.axon > 0 ? c.axon : 1.6 + c.t[6] * 3.2);
   };
   const near = (i, j) => {
     const A = cells[i], B = cells[j];

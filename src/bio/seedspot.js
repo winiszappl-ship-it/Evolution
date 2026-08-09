@@ -18,7 +18,7 @@ import { MINERAL_RATE, ABSORB_RATE } from './organism.js';
  * nie karmiła jej lepiej.
  */
 export function findSeedSpot(world, climate, rng, design) {
-  const source = typeof design === 'string' ? design : (design && design.source) || 'absorb';
+  const source = typeof design === 'string' ? design : (design && design.source) || 'litho';
 
   // Uśredniona doba zamiast bieżącej godziny: w chwili zasiewu może być noc,
   // a to mówi o świecie tyle co nic. dayLight 0.5 zeruje wahanie dobowe
@@ -40,7 +40,10 @@ export function findSeedSpot(world, climate, rng, design) {
     const oxyEff = Math.min(1.3, Math.max(0.1, 0.25 + world.oxygenAt(i) * 3.2));
 
     let score;
-    if (source === 'absorb') {
+    if (source === 'litho') {
+      // liczy się zasobność podłoża: litotrof zjada to, co wywietrzało ze skały
+      score = Math.min(1, world.nutrient[i] / (mineralNeed * 3));
+    } else if (source === 'absorb') {
       score = Math.min(1, world.detritus[i] / detritusNeed) * (b.water ? 1.4 : 0.55);
     } else {
       const fx = (i % world.W) * TILE + TILE / 2, fy = ((i / world.W) | 0) * TILE + TILE / 2;

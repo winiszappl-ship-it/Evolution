@@ -1,7 +1,7 @@
 import { World, TILE, SECTOR_TILES } from '../world/world.js';
 import { FOOD_REMAINS } from '../world/food.js';
 import { Climate, TICKS_PER_YEAR } from '../world/climate.js';
-import { Organism, DETAIL, isConsumer, MINERAL_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
+import { Organism, DETAIL, isConsumer, LITHO_RATE, ABSORB_RATE, DIGEST_RATE } from '../bio/organism.js';
 import { SpeciesRegistry } from '../bio/species.js';
 import { Chronicle, Watcher } from './chronicle.js';
 import { genomeFromDesign, randomGenome, defaultDesign } from '../bio/seed.js';
@@ -353,6 +353,10 @@ export class Simulation {
       if (world.mineralLoad[ti] === 0 && world.detritusLoad[ti] === 0) {
         this._loadTiles.push(ti);
       }
+      // Minerały w kaflu są skończone i odnawiają się wolno. Kto stanie tam,
+      // gdzie już ktoś jest, zabiera mu połowę — i to jest jedyny powód, dla
+      // którego rozejście się po świecie w ogóle ma sens.
+      world.mineralLoad[ti] += cap.litho * LITHO_RATE;
       world.detritusLoad[ti] += cap.absorb * ABSORB_RATE + cap.digest * DIGEST_RATE;
     }
   }
@@ -539,7 +543,7 @@ export class Simulation {
     // tylko spowalniałby jedzenie i nigdy nie powstałby wyścig zbrojeń.
     if (hit > 0 && b._lastHit >= 0) {
       const cell = b.body.cells[b._lastHit];
-      const spite = hit * (cell.t[7] * 0.55 + cell.t[3] * 0.3);
+      const spite = hit * (cell.t[8] * 0.55 + cell.t[4] * 0.3);
       if (spite > 1e-4) a.hurtAt(cx, cy, spite);
     }
 

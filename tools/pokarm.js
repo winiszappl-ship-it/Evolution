@@ -50,7 +50,7 @@ check(gotFar === 0 && gotNear > 0,
 
 // ---------------------------------------------------------------- dobór
 // Tam, gdzie da się żyć — czyli tam, gdzie leży materia po czymś, co umarło.
-const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'absorb');
+const spot = findSeedSpot(sim.world, sim.climate, sim.rng, 'litho');
 sim.seed(defaultDesign(), spot.x, spot.y);
 sim.setFocus(spot.x, spot.y, 700, 3);
 const ticks = Math.round(years * TICKS_PER_YEAR);

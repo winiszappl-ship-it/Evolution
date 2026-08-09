@@ -28,7 +28,7 @@ export class Species {
     this.cx = 0; this.cy = 0;             // centroid geograficzny
     this.hue = genome.params.hue;
     this.avg = { cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, generation: 0 };
-    this.dietFrac = { absorb: 0, plant: 0, carrion: 0, predation: 0 };
+    this.dietFrac = { litho: 0, absorb: 0, plant: 0, carrion: 0, predation: 0 };
     this.trophic = 'nieokreślona';   // opis zmierzony, nie kategoria z góry
     this.notes = [];
     this.depth = parent ? parent.depth + 1 : 0;
@@ -38,10 +38,10 @@ export class Species {
   get age() { return (this.extinct ?? Infinity) - this.born; }
 
   dominantDiet() {
-    let k = 'absorb', v = -1;
+    let k = 'litho', v = -1;
     for (const key of Object.keys(this.dietFrac)) if (this.dietFrac[key] > v) { v = this.dietFrac[key]; k = key; }
     const labels = {
-      absorb: 'osmotrof', plant: 'zjadacz materii roślinnej',
+      litho: 'litotrof', absorb: 'osmotrof', plant: 'zjadacz materii roślinnej',
       carrion: 'zjadacz szczątków', predation: 'konsument materii żywej',
     };
     return { key: k, label: v > 0.001 ? labels[k] : 'nieokreślony', frac: v };
@@ -111,7 +111,7 @@ export class SpeciesRegistry {
       if (!s._acc) {
         s._acc = {
           cells: 0, mass: 0, energy: 0, neurons: 0, muscles: 0, speed: 0, gen: 0, cx: 0, cy: 0,
-          d: { absorb: 0, plant: 0, carrion: 0, predation: 0 }, dn: 0, troph: new Map(),
+          d: { litho: 0, absorb: 0, plant: 0, carrion: 0, predation: 0 }, dn: 0, troph: new Map(),
           fp: new Float32Array(s.fingerprint.length), fpN: 0,
         };
       }

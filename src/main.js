@@ -49,7 +49,7 @@ class App {
     // toczy się świat, który istnieje wyłącznie teraz.
     const params = { ...DEFAULT_PARAMS, seed: 'menu-' + Math.floor(Math.random() * 99999) };
     this.attach(new Simulation(params));
-    const spot = this.findSeedSpot('absorb');
+    const spot = this.findSeedSpot('litho');
     this.sim.seed(defaultDesign(), spot.x, spot.y);
     this.camera.setTarget(spot.x, spot.y);
     this.camera.tzoom = this.camera.fitZoom() * 2.4;

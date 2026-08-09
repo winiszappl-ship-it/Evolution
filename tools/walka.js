@@ -84,15 +84,15 @@ big._sector = sim.world.sectorOf(cx, cy);
 if (big.body.cellCount >= 3) {
   const pos = { x: 0, y: 0 };
   big.cellWorldPos(0, pos);
-  const capBefore = big.body.cap.digest;
+  const capBefore = big.body.cap.litho;
   for (let t = 0; t < 40 && big.cellsAlive === big.body.cellCount; t++) big.hurtAt(pos.x, pos.y, 0.2);
   if (big._capDirty) big.recomputeCap();
   check(big.alive && big.cellsAlive < big.body.cellCount,
     'ciało przeżywa utratę części komórek',
     `zostało ${big.cellsAlive} z ${big.body.cellCount}`);
-  check(big.body.cap.digest < capBefore,
+  check(big.body.cap.litho < capBefore,
     'martwa komórka przestaje pracować na rzecz organizmu',
-    `trawienie ${capBefore.toFixed(2)} → ${big.body.cap.digest.toFixed(2)}`);
+    `litotrofia ${capBefore.toFixed(2)} → ${big.body.cap.litho.toFixed(2)}`);
 } else {
   console.log('  (ciało testowe za małe — pomijam sprawdzenie utraty komórek)');
 }
@@ -101,7 +101,7 @@ if (big.body.cellCount >= 3) {
 const world = new Simulation({ ...DEFAULT_PARAMS, seed: 'test-alpha', size: 'small' });
 // Zasiew idzie tam, gdzie da się żyć. Środek mapy przestał być takim miejscem,
 // gdy energia przestała padać z nieba i zaczęła wypływać z konkretnych punktów.
-const wspot = findSeedSpot(world.world, world.climate, world.rng, 'absorb');
+const wspot = findSeedSpot(world.world, world.climate, world.rng, 'litho');
 world.seed(defaultDesign(), wspot.x, wspot.y);
 world.setFocus(wspot.x, wspot.y, 700, 3);
 const causes = {};

@@ -15,16 +15,16 @@ import { clamp } from '../core/util.js';
 export const MORPHOGENS = 5;
 
 // Zdolności komórki. To są własności fizyczne, nie role ekologiczne.
-export const TRAITS = ['digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
+export const TRAITS = ['litho', 'digest', 'absorb', 'contract', 'rigid', 'sense', 'neuro', 'store', 'armor', 'repro'];
 export const TRAIT_LABEL = {
-  digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
+  litho: 'litotrofia', digest: 'trawienie', absorb: 'wchłanianie', contract: 'kurczliwość',
   rigid: 'sztywność', sense: 'receptory', neuro: 'neurony', store: 'magazyn',
   armor: 'pancerz', repro: 'rozrodczość',
 };
 export const TRAIT_COUNT = TRAITS.length;
 
 // Koszt utrzymania jednostki danej zdolności (energia / takt / komórkę)
-export const TRAIT_UPKEEP = [0.020, 0.008, 0.022, 0.006, 0.014, 0.030, 0.005, 0.012, 0.016];
+export const TRAIT_UPKEEP = [0.012, 0.020, 0.008, 0.022, 0.006, 0.014, 0.030, 0.005, 0.012, 0.016];
 
 export const ACT = {
   DIVIDE: 0,      // podział komórki pod zadanym kątem

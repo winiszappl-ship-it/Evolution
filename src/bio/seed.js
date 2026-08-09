@@ -17,8 +17,9 @@ export const CELL_DESIGN_DEF = {
 };
 
 export const ENERGY_SOURCES = [
-  { key: 'absorb', label: 'Materia rozpuszczona', trait: 1, hint: 'Pobieranie substancji wprost z otoczenia. Skuteczne w wodzie.' },
-  { key: 'digest', label: 'Martwa materia', trait: 0, hint: 'Rozkład szczątków. Wymaga miejsc, gdzie coś już umarło.' },
+  { key: 'litho', label: 'Minerały z podłoża', trait: 0, hint: 'Energia wprost ze skały. Jest wszędzie, ale odnawia się wolno — w tłoku nie starcza.' },
+  { key: 'absorb', label: 'Materia rozpuszczona', trait: 2, hint: 'Pobieranie substancji wprost z otoczenia. Skuteczne w wodzie.' },
+  { key: 'digest', label: 'Martwa materia', trait: 1, hint: 'Rozkład szczątków. Wymaga miejsc, gdzie coś już umarło.' },
 ];
 
 export const DESIGN_BUDGET = 34;
@@ -32,7 +33,7 @@ export function designCost(design) {
 }
 
 export function defaultDesign() {
-  const d = { source: 'absorb' };
+  const d = { source: 'litho' };
   for (const [k, v] of Object.entries(CELL_DESIGN_DEF)) d[k] = v.def;
   return d;
 }
@@ -70,22 +71,22 @@ export function genomeFromDesign(design, hue = 120) {
   g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (src.trait + 0.5) / TRAITS.length, 0.95, 0, 1));
   // magazyn
   if (v('storage') > 0.05) {
-    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (6 + 0.5) / TRAITS.length, clamp(v('storage') * 1.1, 0, 1), 0, 1));
+    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (7 + 0.5) / TRAITS.length, clamp(v('storage') * 1.1, 0, 1), 0, 1));
   }
   // odporność
   if (v('resistance') > 0.05) {
-    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (7 + 0.5) / TRAITS.length, clamp(v('resistance') * 1.1, 0, 1), 0, 1));
+    g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (8 + 0.5) / TRAITS.length, clamp(v('resistance') * 1.1, 0, 1), 0, 1));
   }
   // komórka rozrodcza
-  g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (8 + 0.5) / TRAITS.length, 0.4, 0, 1));
+  g.genes.push(gene(CONST_SIG, 0, 0.5, ACT.SPECIALIZE, (9 + 0.5) / TRAITS.length, 0.4, 0, 1));
 
   // Geny wyciszone: nic nie robią, dopóki mutacja nie obniży progu. To ukryty
   // potencjał obecny od pierwszej chwili — nie zachowanie, tylko możliwość.
   //
   // Bez nich niektóre drogi ewolucji były zamknięte nie przez dobór, lecz przez
-  // sam zapis genomu. Zmiana źródła energii z wchłaniania na trawienie wymaga
+  // sam zapis genomu. Zmiana źródła energii z litotrofii na trawienie wymaga
   // jednej małej mutacji, bo te zdolności leżą obok siebie na liście cech;
-  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty wchłaniania
+  // dojście do kurczliwości wymagało skoku o dwie pozycje i utraty litotrofii
   // po drodze. W pomiarze na 2047 urodzonych organizmach tkanka kurczliwa
   // pojawiła się cztery razy, a ani razu w ciele wielokomórkowym — czyli mięsień
   // nie powstał nigdy. Osobny wyciszony gen daje tej ścieżce taki sam dostęp,
@@ -93,9 +94,9 @@ export function genomeFromDesign(design, hue = 120) {
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.DIVIDE, 0.25, 0, 0, 1));
   g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.EMIT, 0.1, 0.8, 0, 1));
   // kurczliwość — bez niej wiązanie między komórkami nigdy nie stanie się mięśniem
-  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (2 + 0.5) / TRAITS.length, 0.8, 0, 1));
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (3 + 0.5) / TRAITS.length, 0.8, 0, 1));
   // receptory — bez nich organizm nie ma czym odczytać gradientu pokarmu
-  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (4 + 0.5) / TRAITS.length, 0.7, 0.2, 1));
+  g.genes.push(gene(CONST_SIG, 0, 3.0, ACT.SPECIALIZE, (5 + 0.5) / TRAITS.length, 0.7, 0.2, 1));
 
   return g;
 }

@@ -100,25 +100,28 @@ Mutacje obejmują zmianę wartości, delecję genu, insercję, duplikację fragm
 inwersję kolejności i rzadką duplikację całego genomu. Tempo mutacji jest
 zapisane w samym DNA i również podlega doborowi.
 
-### Świat nie ma produkcji pierwotnej
+### Produkcją pierwotną są minerały w podłożu
 
-Nie ma fotosyntezy ani źródeł chemicznych. Nic nie zamienia światła, minerałów
-ani ciepła planety na energię życia. Zostały dwa sposoby zdobywania energii
-i **oba żywią się tym, co już umarło**: wchłanianie materii rozpuszczonej
-i trawienie okruchów.
+Nie ma fotosyntezy ani źródeł chemicznych. Jedynym dopływem energii jest
+**litotrofia**: tkanka, która czerpie energię wprost ze skały. Minerały
+odnawiają się same, przez wietrzenie — to jedyny zasób w tym świecie, którego
+nie trzeba nikomu odebrać.
 
-Skutek jest arytmetyczny, nie ekologiczny. Każdy takt zabiera energię na
-utrzymanie, nic jej nie dokłada, a rozkład zamienia materię organiczną
-w minerały, których nikt już nie umie użyć. Świat ma skończony zapas z chwili
-powstania i wyłącznie go zużywa.
+Odnawiają się jednak wolno. Kafel oddaje ułamek jednostki na takt, a utrzymanie
+jednej komórki kosztuje mniej więcej tyle samo, więc jeden kafel wyżywi jedną,
+najwyżej dwie. Zapotrzebowanie wszystkich obecnych liczy się razem i niedobór
+dzieli się po równo — kto stanie tam, gdzie już ktoś jest, zabiera mu połowę.
+Rozejście się po świecie jest jedynym sposobem, żeby populacja urosła.
 
-Pomiar na sześciu światach: szczyt populacji 2–3 osobniki, wymarcie w roku
-0,48–0,90, przyczyna zawsze ta sama — głód. Przetrwało 0 z 6.
+Energia z jednostki minerału jest równa tej z jednostki materii rozpuszczonej
+(1,15). To nie jest liczba dobrana pod wynik — jest taka sama jak u sąsiedniej
+drogi, żeby silnik nie premiował żadnej z nich samym współczynnikiem.
 
-To jest stan świadomie wybrany, nie usterka. Najbliższa droga do żywego
-świata prowadzi przez przywrócenie któregokolwiek dopływu energii: minerały
-z gleby odnawiają się same przez wietrzenie skał, więc wystarczyłoby, żeby
-któraś tkanka umiała je zjeść.
+Pomiar na sześciu światach po 10 latach: 3–17 organizmów na 2–6 kaflach,
+pokolenie 1–5, życie przetrwało w 6/6. Świat jest ubogi i rośnie wolno.
+Podniesienie wydajności minerału do 3 wypełnia go do sufitu populacji (1597
+osobników na 58–105 kaflach, pokolenie 18–27) — ale to jest decyzja o tym,
+jak żyzna ma być planeta, a nie poprawka błędu.
 
 ### Nie ma śmierci ze starości
 

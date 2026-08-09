@@ -4,7 +4,7 @@ import { clamp, hsl, TAU } from '../core/util.js';
 import { TRAITS } from '../bio/genome.js';
 
 // Barwa akcentu dla każdej zdolności komórki — wyłącznie dla czytelności.
-const TRAIT_HUE = [18, 185, 320, 40, 55, 275, 35, 210, 340];
+const TRAIT_HUE = [92, 18, 185, 320, 40, 55, 275, 35, 210, 340];
 // Powyżej tylu okruchów naraz rysujemy punkty zamiast obrazków — inaczej
 // przy oddaleniu klatka rozsypuje się na tysiącach wywołań drawImage.
 const MAX_FOOD_SPRITES = 900;
@@ -346,12 +346,12 @@ export class Renderer {
         ctx.lineWidth = Math.max(1, o.genome.params.membrane * zoom * 0.09);
         ctx.stroke();
         // jądro — wskazuje aktywność neuronu, jeśli komórka nim jest
-        if (c.t[5] > 0.15) {
+        if (c.t[6] > 0.15) {
           const n = o.brain.neurons.find(nn => nn.cell === i);
           const a = n ? clamp((n.state + 1) / 2, 0, 1) : 0.5;
           ctx.fillStyle = hsl(275, 0.8, 0.25 + a * 0.55);
           ctx.beginPath(); ctx.arc(px[i], py[i], r * 0.38, 0, TAU); ctx.fill();
-        } else if (c.t[4] > 0.1) {
+        } else if (c.t[5] > 0.1) {
           ctx.fillStyle = hsl(55, 0.9, 0.7);
           ctx.beginPath(); ctx.arc(px[i], py[i], r * 0.3, 0, TAU); ctx.fill();
         }
