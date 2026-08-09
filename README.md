@@ -131,12 +131,12 @@ już trwa. Zasiana przez gracza komórka może więc dożyć końca świata.
 
 ### Komórka ma zdolności, nie rolę
 
-Komórka może rozwinąć dziewięć fizycznych zdolności: trawienie, wchłanianie,
-kurczliwość, sztywność, receptory, przewodzenie sygnału, magazyn energii,
-pancerz i rozrodczość. Każda coś kosztuje w każdym takcie.
+Komórka może rozwinąć dziesięć fizycznych zdolności: litotrofię, trawienie,
+wchłanianie, kurczliwość, sztywność, receptory, przewodzenie sygnału, magazyn
+energii, pancerz i rozrodczość. Każda coś kosztuje w każdym takcie.
 
 Nigdzie w kodzie nie ma pojęcia rośliny, roślinożercy ani drapieżnika.
-Organizm, który wchłania materię rozpuszczoną, jest opisywany jako osmotrof
+Organizm, który czerpie energię ze skały, jest opisywany jako litotrof
 dopiero po fakcie — na podstawie tego, skąd faktycznie wzięła się jego energia.
 Ten sam organizm może w kolejnym pokoleniu żywić się padliną, jeśli mutacja
 przestawi jego komórki na trawienie.
@@ -160,7 +160,7 @@ zjadaniu zapisuje też, czym żywiła się ofiara. Stąd biorą się etykiety:
 
 | etykieta | co znaczy |
 |---|---|
-| producent | większość energii z materii rozpuszczonej |
+| producent | większość energii z minerałów lub z materii rozpuszczonej |
 | roślinożerca | żywi się materią wydaloną przez producentów |
 | padlinożerca | żywi się szczątkami po martwych ciałach |
 | konsument pierwszego rzędu | zjada żywych producentów |
